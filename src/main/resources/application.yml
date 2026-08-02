@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: satire-api
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/satire}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:}
+  flyway:
+    enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  modulith:
+    detection-strategy: explicitly-annotated
+
+server:
+  error:
+    include-message: never
