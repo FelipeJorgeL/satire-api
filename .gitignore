@@ -6,6 +6,7 @@ target/
 .project
 .settings/
 .env
+.claude/
 docs/
 application-local.yml
 application-local.yaml
