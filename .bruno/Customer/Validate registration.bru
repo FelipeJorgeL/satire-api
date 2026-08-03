@@ -1,0 +1,33 @@
+meta {
+  name: Validate registration
+  type: http
+  seq: 2
+  tags: [
+    customer
+    negative
+  ]
+}
+
+post {
+  url: {{BASE_URL}}/api/v1/auth/register
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {}
+}
+
+tests {
+  test("returns 400 Bad Request", function () {
+    expect(res.status).to.equal(400);
+  });
+}
+
+docs {
+  Confirms that the public registration endpoint rejects an invalid payload before persistence.
+}
