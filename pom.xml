@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>br.com.felipejorge</groupId>
+    <groupId>br.com.api</groupId>
     <artifactId>satire-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>satire-api</name>
