@@ -97,6 +97,10 @@ public class Customer {
         return email;
     }
 
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
     public String getCpf() {
         return cpf;
     }
