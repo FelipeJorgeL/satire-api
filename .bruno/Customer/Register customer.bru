@@ -28,6 +28,12 @@ body:json {
   }
 }
 
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("CUSTOMER_ID", res.body.id);
+  }
+}
+
 tests {
   test("returns 201 Created", function () {
     expect(res.status).to.equal(201);
@@ -42,4 +48,5 @@ tests {
 docs {
   Creates a customer, normalizes the email, hashes the password and assigns the CLIENTE profile.
   Change CUSTOMER_EMAIL or CUSTOMER_CPF before running again because both values must be unique.
+  Saves the created id into CUSTOMER_ID for the requests below.
 }
