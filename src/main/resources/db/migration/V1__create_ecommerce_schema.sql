@@ -174,7 +174,6 @@ CREATE TABLE pedidos (
     desconto NUMERIC(12, 2) NOT NULL DEFAULT 0,
     frete NUMERIC(12, 2) NOT NULL DEFAULT 0,
     valor_total NUMERIC(12, 2) NOT NULL,
-    moeda CHAR(3) NOT NULL DEFAULT 'BRL',
     criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT ck_pedidos_status CHECK (status IN (
@@ -187,7 +186,6 @@ CREATE TABLE pedidos (
     CONSTRAINT ck_pedidos_valor_total CHECK (
         valor_total >= 0 AND valor_total = subtotal - desconto + frete
     ),
-    CONSTRAINT ck_pedidos_moeda CHECK (moeda = 'BRL'),
     CONSTRAINT fk_pedidos_usuario FOREIGN KEY (usuario_id)
         REFERENCES usuarios (id) ON DELETE RESTRICT
 );
@@ -240,7 +238,6 @@ CREATE TABLE pagamentos (
     metodo VARCHAR(30) NOT NULL,
     status VARCHAR(30) NOT NULL DEFAULT 'PENDENTE',
     valor NUMERIC(12, 2) NOT NULL,
-    moeda CHAR(3) NOT NULL DEFAULT 'BRL',
     chave_idempotencia VARCHAR(255) NOT NULL UNIQUE,
     transacao_gateway_id VARCHAR(255) UNIQUE,
     pago_em TIMESTAMPTZ,
@@ -251,7 +248,6 @@ CREATE TABLE pagamentos (
         'PENDENTE', 'APROVADO', 'RECUSADO', 'CANCELADO', 'ESTORNADO'
     )),
     CONSTRAINT ck_pagamentos_valor CHECK (valor > 0),
-    CONSTRAINT ck_pagamentos_moeda CHECK (moeda = 'BRL'),
     CONSTRAINT ck_pagamentos_pago_em CHECK (
         status <> 'APROVADO' OR pago_em IS NOT NULL
     ),
@@ -269,6 +265,7 @@ CREATE TABLE entregas (
     entregue_em TIMESTAMPTZ,
     previsao_entrega DATE,
     criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT ck_entregas_status CHECK (status IN (
         'AGUARDANDO_ENVIO', 'ENVIADO', 'EM_TRANSITO', 'ENTREGUE', 'DEVOLVIDO'
     )),
@@ -290,7 +287,6 @@ CREATE TABLE movimentacoes_estoque (
     estoque_novo INTEGER NOT NULL,
     observacao VARCHAR(255),
     criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    atualizado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT ck_movimentacoes_estoque_tipo CHECK (tipo IN (
         'ENTRADA', 'SAIDA', 'VENDA', 'CANCELAMENTO'
     )),
