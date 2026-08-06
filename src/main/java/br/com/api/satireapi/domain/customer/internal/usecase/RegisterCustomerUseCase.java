@@ -31,13 +31,15 @@ public class RegisterCustomerUseCase {
     @Transactional
     public CustomerResponse execute(RegisterCustomerRequest request) {
         var normalizedEmail = Customer.normalizeEmail(request.email());
+        // Hash antes da checagem de duplicidade: os dois caminhos pagam o custo de BCrypt,
+        // impedindo enumeração de e-mails pela diferença de tempo de resposta.
+        var passwordHash = passwordEncoder.encode(request.password());
         if (customerRegistry.existsByEmail(normalizedEmail)) {
             throw new CustomerEmailAlreadyExistsException();
         }
 
         var profile = profileFinder.findByName(CUSTOMER_PROFILE)
             .orElseThrow(CustomerProfileNotConfiguredException::new);
-        var passwordHash = passwordEncoder.encode(request.password());
         var customer = Customer.register(
             request.name(),
             normalizedEmail,
