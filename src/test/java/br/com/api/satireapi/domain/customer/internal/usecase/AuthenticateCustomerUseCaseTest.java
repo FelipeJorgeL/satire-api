@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.LinkedHashSet;
@@ -25,10 +26,12 @@ class AuthenticateCustomerUseCaseTest {
     private final CustomerFinder customerFinder = mock(CustomerFinder.class);
     private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
     private final JwtTokenService jwtTokenService = mock(JwtTokenService.class);
+    private final LoginAttemptTracker loginAttemptTracker = mock(LoginAttemptTracker.class);
     private final AuthenticateCustomerUseCase useCase = new AuthenticateCustomerUseCase(
         customerFinder,
         passwordEncoder,
-        jwtTokenService
+        jwtTokenService,
+        loginAttemptTracker
     );
 
     @Test
@@ -55,6 +58,7 @@ class AuthenticateCustomerUseCaseTest {
         assertEquals("jwt-token", response.accessToken());
         assertEquals("Bearer", response.tokenType());
         assertEquals(3600L, response.expiresIn());
+        verify(loginAttemptTracker).recordSuccess("felipe@example.com");
     }
 
     @Test
@@ -68,6 +72,7 @@ class AuthenticateCustomerUseCaseTest {
 
         assertThrows(InvalidCredentialsException.class,
             () -> useCase.execute(new LoginRequest("felipe@example.com", "wrong-password")));
+        verify(loginAttemptTracker).recordFailure("felipe@example.com");
     }
 
     @Test
@@ -79,6 +84,17 @@ class AuthenticateCustomerUseCaseTest {
 
         // Custo de BCrypt deve ser pago mesmo sem conta: bloqueia enumeração por timing.
         verify(passwordEncoder).matches(eq("any-password"), any());
+        // Falha em e-mail inexistente também conta: o 429 não pode virar oráculo de existência.
+        verify(loginAttemptTracker).recordFailure("ghost@example.com");
+    }
+
+    @Test
+    void blocksLoginWhenAttemptsExceeded() {
+        when(loginAttemptTracker.isBlocked("felipe@example.com")).thenReturn(true);
+
+        assertThrows(TooManyLoginAttemptsException.class,
+            () -> useCase.execute(new LoginRequest("felipe@example.com", "safe-password")));
+        verifyNoInteractions(customerFinder);
     }
 
     @Test

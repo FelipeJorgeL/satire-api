@@ -18,6 +18,12 @@ headers {
   Authorization: Bearer {{ACCESS_TOKEN}}
 }
 
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("CUSTOMER_ID", res.body.id);
+  }
+}
+
 tests {
   test("returns 200 OK", function () {
     expect(res.status).to.equal(200);
