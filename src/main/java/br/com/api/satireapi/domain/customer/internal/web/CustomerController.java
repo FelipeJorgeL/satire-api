@@ -2,12 +2,12 @@ package br.com.api.satireapi.domain.customer.internal.web;
 
 import br.com.api.satireapi.domain.customer.internal.dto.request.LoginRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.request.RegisterCustomerRequest;
-import br.com.api.satireapi.domain.customer.internal.dto.response.CustomerResponse;
 import br.com.api.satireapi.domain.customer.internal.dto.response.LoginResponse;
 import br.com.api.satireapi.domain.customer.internal.usecase.AuthenticateCustomerUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.CustomerEmailAlreadyExistsException;
 import br.com.api.satireapi.domain.customer.internal.usecase.RegisterCustomerUseCase;
 import jakarta.validation.Valid;
-import java.net.URI;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,9 +27,14 @@ class CustomerController {
     }
 
     @PostMapping("/register")
-    ResponseEntity<CustomerResponse> register(@Valid @RequestBody RegisterCustomerRequest request) {
-        var response = registerCustomer.execute(request);
-        return ResponseEntity.created(URI.create("/api/v1/me")).body(response);
+    ResponseEntity<Void> register(@Valid @RequestBody RegisterCustomerRequest request) {
+        try {
+            registerCustomer.execute(request);
+        } catch (CustomerEmailAlreadyExistsException | DataIntegrityViolationException ex) {
+            // Resposta idêntica à de sucesso: não revela se o e-mail (ou CPF) já está cadastrado.
+            // DataIntegrityViolationException cobre a corrida de dois registros simultâneos.
+        }
+        return ResponseEntity.accepted().build();
     }
 
     @PostMapping("/login")

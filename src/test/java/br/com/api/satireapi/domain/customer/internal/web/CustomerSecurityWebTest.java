@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,10 +12,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import br.com.api.satireapi.domain.customer.CustomerGateway;
 import br.com.api.satireapi.domain.customer.dto.CustomerSummary;
 import br.com.api.satireapi.domain.customer.internal.dto.request.LoginRequest;
+import br.com.api.satireapi.domain.customer.internal.dto.request.RegisterCustomerRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.response.LoginResponse;
 import br.com.api.satireapi.domain.customer.internal.usecase.AuthenticateCustomerUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.CustomerEmailAlreadyExistsException;
 import br.com.api.satireapi.domain.customer.internal.usecase.InvalidCredentialsException;
 import br.com.api.satireapi.domain.customer.internal.usecase.RegisterCustomerUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.TooManyLoginAttemptsException;
 import br.com.api.satireapi.infra.security.SecurityConfig;
 import br.com.api.satireapi.infra.security.jwt.JwtAuthenticationFilter;
 import br.com.api.satireapi.infra.security.jwt.JwtTokenService;
@@ -55,6 +59,32 @@ class CustomerSecurityWebTest {
 
     @MockitoBean
     private CustomerGateway customerGateway;
+
+    @Test
+    void registerReturnsSameGenericResponseForNewAndExistingEmail() throws Exception {
+        var body = objectMapper.writeValueAsString(new RegisterCustomerRequest(
+            "Felipe Jorge", "felipe@example.com", "safe-password", "12345678901", "11999999999"));
+
+        mockMvc.perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isAccepted())
+            .andExpect(content().string(""));
+
+        when(registerCustomerUseCase.execute(any())).thenThrow(new CustomerEmailAlreadyExistsException());
+
+        mockMvc.perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isAccepted())
+            .andExpect(content().string(""));
+    }
+
+    @Test
+    void loginBlockedByRateLimitReturnsTooManyRequests() throws Exception {
+        when(authenticateCustomerUseCase.execute(any())).thenThrow(new TooManyLoginAttemptsException());
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new LoginRequest("felipe@example.com", "safe-password"))))
+            .andExpect(status().isTooManyRequests());
+    }
 
     @Test
     void loginWithValidCredentialsReturnsToken() throws Exception {
