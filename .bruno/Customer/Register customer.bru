@@ -29,17 +29,15 @@ body:json {
 }
 
 tests {
-  test("returns 201 Created", function () {
-    expect(res.status).to.equal(201);
-  });
-
-  test("does not expose password data", function () {
-    expect(res.body).not.to.have.property("password");
-    expect(res.body).not.to.have.property("passwordHash");
+  test("returns generic 202 Accepted", function () {
+    expect(res.status).to.equal(202);
   });
 }
 
 docs {
   Creates a customer, normalizes the email, hashes the password and assigns the CLIENTE profile.
-  Change CUSTOMER_EMAIL or CUSTOMER_CPF before running again because both values must be unique.
+  The response is always a body-less 202 — identical whether the email is new or already
+  registered — so the endpoint cannot be used to probe which emails have accounts.
+  Confirm the outcome by logging in. CUSTOMER_ID is captured later by
+  "Get authenticated customer".
 }

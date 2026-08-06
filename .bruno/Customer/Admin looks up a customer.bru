@@ -1,0 +1,35 @@
+meta {
+  name: Admin looks up a customer
+  type: http
+  seq: 8
+  tags: [
+    customer
+    manual
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/customers/{{CUSTOMER_ID}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ADMIN_ACCESS_TOKEN}}
+}
+
+docs {
+  No automated assertion here on purpose — this request only returns 200 after
+  the manual setup below; anything else (401 with ADMIN_ACCESS_TOKEN still
+  empty, for example) is expected until you do it, not a bug.
+
+  Manual setup — there is no self-service way to become ADMIN yet:
+
+  1. Run "Register customer", then grant the ADMIN profile directly in Postgres:
+     INSERT INTO usuarios_perfis (usuario_id, perfil_id)
+     VALUES ('{{CUSTOMER_ID}}', '00000000-0000-0000-0000-000000000002')
+     ON CONFLICT DO NOTHING;
+  2. Run "Login customer" again so the new token's "profiles" claim includes ADMIN.
+  3. Paste that accessToken into the ADMIN_ACCESS_TOKEN environment variable.
+  4. Run this request.
+}

@@ -1,0 +1,31 @@
+meta {
+  name: Reject customer lookup without admin profile
+  type: http
+  seq: 7
+  tags: [
+    customer
+    negative
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/customers/{{CUSTOMER_ID}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+}
+
+tests {
+  test("returns 403 Forbidden", function () {
+    expect(res.status).to.equal(403);
+  });
+}
+
+docs {
+  Run "Register customer" and "Login customer" first.
+  GET /api/v1/customers/{id} requires the ADMIN profile; a freshly registered
+  customer only has CLIENTE, so this must be forbidden.
+}

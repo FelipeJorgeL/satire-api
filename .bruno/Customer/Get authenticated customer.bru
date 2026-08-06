@@ -1,0 +1,41 @@
+meta {
+  name: Get authenticated customer
+  type: http
+  seq: 5
+  tags: [
+    customer
+    smoke
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/me
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("CUSTOMER_ID", res.body.id);
+  }
+}
+
+tests {
+  test("returns 200 OK", function () {
+    expect(res.status).to.equal(200);
+  });
+
+  test("returns the caller's own summary", function () {
+    expect(res.body.email).to.equal(bru.getEnvVar("CUSTOMER_EMAIL"));
+  });
+}
+
+docs {
+  Run "Login customer" first so ACCESS_TOKEN is set.
+  Any authenticated profile (CLIENTE or ADMIN) can call this — it only ever
+  returns the caller's own data.
+}
