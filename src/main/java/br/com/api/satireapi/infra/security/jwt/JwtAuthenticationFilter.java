@@ -33,7 +33,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var header = request.getHeader("Authorization");
         if (header != null && header.startsWith(BEARER_PREFIX)) {
             var token = header.substring(BEARER_PREFIX.length());
-            jwtTokenService.parse(token).ifPresent(this::authenticate);
+            jwtTokenService.parse(token).ifPresent(claims -> {
+                try {
+                    authenticate(claims);
+                } catch (RuntimeException ex) {
+                    // Token assinado mas com claims fora do contrato: segue não autenticado (401), nunca 500.
+                    SecurityContextHolder.clearContext();
+                }
+            });
         }
         filterChain.doFilter(request, response);
     }
