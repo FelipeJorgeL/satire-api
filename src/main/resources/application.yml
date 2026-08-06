@@ -17,3 +17,8 @@ spring:
 server:
   error:
     include-message: never
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: ${JWT_EXPIRATION:3600}

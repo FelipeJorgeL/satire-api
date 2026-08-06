@@ -1,0 +1,27 @@
+meta {
+  name: Reject unauthenticated me
+  type: http
+  seq: 6
+  tags: [
+    customer
+    negative
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/me
+  body: none
+  auth: none
+}
+
+tests {
+  test("returns 401 Unauthorized", function () {
+    expect(res.status).to.equal(401);
+  });
+}
+
+docs {
+  No Authorization header at all — every route except /register and /login
+  requires a bearer token since SecurityConfig moved from denyAll() to
+  authenticated().
+}

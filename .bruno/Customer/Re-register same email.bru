@@ -1,0 +1,41 @@
+meta {
+  name: Re-register same email
+  type: http
+  seq: 9
+  tags: [
+    customer
+    negative
+  ]
+}
+
+post {
+  url: {{BASE_URL}}/api/v1/auth/register
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "{{CUSTOMER_NAME}}",
+    "email": "{{CUSTOMER_EMAIL}}",
+    "password": "another-password-entirely",
+    "cpf": null,
+    "phone": null
+  }
+}
+
+tests {
+  test("returns the same generic 202 as a fresh registration", function () {
+    expect(res.status).to.equal(202);
+  });
+}
+
+docs {
+  CUSTOMER_EMAIL was already registered by "Register customer". The response must be
+  byte-identical to a successful registration (202, no body) — any difference would let
+  an attacker enumerate which emails have accounts. Nothing is created or changed.
+}
