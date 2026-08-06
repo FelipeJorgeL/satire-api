@@ -101,7 +101,6 @@ CREATE TABLE variacoes_produtos (
     nome VARCHAR(120) NOT NULL,
     preco NUMERIC(12, 2) NOT NULL,
     estoque INTEGER NOT NULL DEFAULT 0,
-    versao BIGINT NOT NULL DEFAULT 0,
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
     criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -109,7 +108,6 @@ CREATE TABLE variacoes_produtos (
     CONSTRAINT ck_variacoes_produtos_sku CHECK (char_length(trim(sku)) >= 3),
     CONSTRAINT ck_variacoes_produtos_preco CHECK (preco >= 0),
     CONSTRAINT ck_variacoes_produtos_estoque CHECK (estoque >= 0),
-    CONSTRAINT ck_variacoes_produtos_versao CHECK (versao >= 0),
     CONSTRAINT ck_variacoes_produtos_exclusao CHECK (excluido_em IS NULL OR ativo = FALSE),
     CONSTRAINT fk_variacoes_produtos_produto FOREIGN KEY (produto_id)
         REFERENCES produtos (id) ON DELETE CASCADE
@@ -294,18 +292,22 @@ CREATE TABLE movimentacoes_estoque (
     criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT ck_movimentacoes_estoque_tipo CHECK (tipo IN (
-        'ENTRADA', 'VENDA', 'AJUSTE_ENTRADA', 'AJUSTE_SAIDA', 'CANCELAMENTO'
+        'ENTRADA', 'SAIDA', 'VENDA', 'CANCELAMENTO'
     )),
     CONSTRAINT ck_movimentacoes_estoque_quantidade CHECK (quantidade > 0),
     CONSTRAINT ck_movimentacoes_estoque_saldos CHECK (
         estoque_anterior >= 0 AND estoque_novo >= 0
     ),
     CONSTRAINT ck_movimentacoes_estoque_consistencia CHECK (
-        (tipo IN ('ENTRADA', 'AJUSTE_ENTRADA', 'CANCELAMENTO')
+        (tipo IN ('ENTRADA', 'CANCELAMENTO')
             AND estoque_novo = estoque_anterior + quantidade)
         OR
-        (tipo IN ('VENDA', 'AJUSTE_SAIDA')
+        (tipo IN ('VENDA', 'SAIDA')
             AND estoque_novo = estoque_anterior - quantidade)
+    ),
+    CONSTRAINT ck_movimentacoes_estoque_pedido CHECK (
+        (tipo IN ('VENDA', 'CANCELAMENTO') AND pedido_id IS NOT NULL)
+        OR (tipo IN ('ENTRADA', 'SAIDA') AND pedido_id IS NULL)
     ),
     CONSTRAINT fk_movimentacoes_estoque_variacao FOREIGN KEY (variacao_produto_id)
         REFERENCES variacoes_produtos (id) ON DELETE RESTRICT,
@@ -340,6 +342,26 @@ CREATE TABLE historicos_status_pedidos (
         REFERENCES pedidos (id) ON DELETE RESTRICT,
     CONSTRAINT fk_historicos_status_usuario FOREIGN KEY (usuario_id)
         REFERENCES usuarios (id) ON DELETE RESTRICT
+);
+
+-- Uma avaliação por cliente por produto; exige um pedido como prova de compra.
+CREATE TABLE avaliacoes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id UUID NOT NULL,
+    produto_id UUID NOT NULL,
+    pedido_id UUID NOT NULL,
+    nota SMALLINT NOT NULL,
+    comentario TEXT,
+    criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_avaliacoes_usuario_produto UNIQUE (usuario_id, produto_id),
+    CONSTRAINT ck_avaliacoes_nota CHECK (nota BETWEEN 1 AND 5),
+    CONSTRAINT fk_avaliacoes_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuarios (id) ON DELETE CASCADE,
+    CONSTRAINT fk_avaliacoes_produto FOREIGN KEY (produto_id)
+        REFERENCES produtos (id) ON DELETE CASCADE,
+    CONSTRAINT fk_avaliacoes_pedido FOREIGN KEY (pedido_id)
+        REFERENCES pedidos (id) ON DELETE CASCADE
 );
 
 -- Índices para foreign keys e filtros frequentes da API.
@@ -387,6 +409,9 @@ CREATE INDEX idx_historicos_status_pedido_id
     ON historicos_status_pedidos (pedido_id);
 CREATE INDEX idx_historicos_status_criado_em
     ON historicos_status_pedidos (criado_em);
+
+CREATE INDEX idx_avaliacoes_produto_id ON avaliacoes (produto_id);
+CREATE INDEX idx_avaliacoes_usuario_id ON avaliacoes (usuario_id);
 
 -- Dados obrigatórios de autorização. Em produção, mantenha este seed em uma migration Flyway.
 INSERT INTO perfis (id, nome)
@@ -452,4 +477,6 @@ FOR EACH ROW EXECUTE FUNCTION definir_atualizado_em();
 CREATE TRIGGER trg_pagamentos_atualizado_em BEFORE UPDATE ON pagamentos
 FOR EACH ROW EXECUTE FUNCTION definir_atualizado_em();
 CREATE TRIGGER trg_entregas_atualizado_em BEFORE UPDATE ON entregas
+FOR EACH ROW EXECUTE FUNCTION definir_atualizado_em();
+CREATE TRIGGER trg_avaliacoes_atualizado_em BEFORE UPDATE ON avaliacoes
 FOR EACH ROW EXECUTE FUNCTION definir_atualizado_em();
