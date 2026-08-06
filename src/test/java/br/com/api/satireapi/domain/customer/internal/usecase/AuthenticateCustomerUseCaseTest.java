@@ -2,7 +2,10 @@ package br.com.api.satireapi.domain.customer.internal.usecase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.LinkedHashSet;
@@ -73,6 +76,9 @@ class AuthenticateCustomerUseCaseTest {
 
         assertThrows(InvalidCredentialsException.class,
             () -> useCase.execute(new LoginRequest("ghost@example.com", "any-password")));
+
+        // Custo de BCrypt deve ser pago mesmo sem conta: bloqueia enumeração por timing.
+        verify(passwordEncoder).matches(eq("any-password"), any());
     }
 
     @Test
