@@ -186,6 +186,8 @@ CREATE TABLE pedidos (
     CONSTRAINT ck_pedidos_valor_total CHECK (
         valor_total >= 0 AND valor_total = subtotal - desconto + frete
     ),
+    -- Redundante com a PK, mas habilita a FK composta de avaliacoes (dono do pedido).
+    CONSTRAINT uq_pedidos_id_usuario UNIQUE (id, usuario_id),
     CONSTRAINT fk_pedidos_usuario FOREIGN KEY (usuario_id)
         REFERENCES usuarios (id) ON DELETE RESTRICT
 );
@@ -341,6 +343,7 @@ CREATE TABLE historicos_status_pedidos (
 );
 
 -- Uma avaliação por cliente por produto; exige um pedido como prova de compra.
+-- A FK composta (pedido_id, usuario_id) garante no banco que o pedido é do próprio avaliador.
 CREATE TABLE avaliacoes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     usuario_id UUID NOT NULL,
@@ -356,8 +359,8 @@ CREATE TABLE avaliacoes (
         REFERENCES usuarios (id) ON DELETE CASCADE,
     CONSTRAINT fk_avaliacoes_produto FOREIGN KEY (produto_id)
         REFERENCES produtos (id) ON DELETE CASCADE,
-    CONSTRAINT fk_avaliacoes_pedido FOREIGN KEY (pedido_id)
-        REFERENCES pedidos (id) ON DELETE CASCADE
+    CONSTRAINT fk_avaliacoes_pedido_do_usuario FOREIGN KEY (pedido_id, usuario_id)
+        REFERENCES pedidos (id, usuario_id) ON DELETE CASCADE
 );
 
 -- Índices para foreign keys e filtros frequentes da API.

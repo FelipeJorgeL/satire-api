@@ -103,6 +103,14 @@ class CustomerSecurityWebTest {
     }
 
     @Test
+    void customersEndpointRequiresAdminForAnyMethod() throws Exception {
+        var token = jwtTokenService.generate(UUID.randomUUID().toString(), "felipe@example.com", List.of("CLIENTE"));
+
+        mockMvc.perform(post("/api/v1/customers/" + UUID.randomUUID()).header("Authorization", "Bearer " + token))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
     void customersEndpointAllowsAdminProfile() throws Exception {
         var adminId = UUID.randomUUID();
         var targetId = UUID.randomUUID();
