@@ -10,5 +10,7 @@ public interface EmailConfirmationStore {
 
     Optional<UUID> findCustomerIdByHash(String tokenHash, Instant now);
 
+    boolean consume(UUID customerId, String tokenHash, Instant now);
+
     void deleteByCustomerId(UUID customerId);
 }

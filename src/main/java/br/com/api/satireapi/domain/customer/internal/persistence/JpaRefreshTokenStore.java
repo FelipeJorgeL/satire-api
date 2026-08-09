@@ -19,18 +19,25 @@ class JpaRefreshTokenStore implements RefreshTokenStore {
 
     @Override
     public void save(UUID customerId, String tokenHash, Instant expiresAt) {
-        var token = repository.findById(customerId)
-            .map(existing -> {
-                existing.rotate(tokenHash, expiresAt);
-                return existing;
-            })
-            .orElseGet(() -> RefreshToken.issue(customerId, tokenHash, expiresAt));
-        repository.save(token);
+        repository.upsert(customerId, tokenHash, expiresAt);
     }
 
     @Override
     public Optional<UUID> findCustomerIdByHash(String tokenHash, Instant now) {
         return repository.findByTokenHashAndExpiresAtAfter(tokenHash, now).map(RefreshToken::getCustomerId);
+    }
+
+    @Override
+    public boolean rotateIfCurrent(
+        UUID customerId,
+        String currentTokenHash,
+        Instant now,
+        String nextTokenHash,
+        Instant nextExpiresAt
+    ) {
+        return repository.rotateIfCurrent(
+            customerId, currentTokenHash, now, nextTokenHash, nextExpiresAt
+        ) == 1;
     }
 
     @Override
