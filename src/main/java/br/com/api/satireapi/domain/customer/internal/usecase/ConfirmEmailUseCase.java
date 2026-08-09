@@ -26,15 +26,21 @@ public class ConfirmEmailUseCase {
 
     @Transactional
     public void execute(String rawToken) {
+        if (rawToken == null || rawToken.length() > OpaqueTokenGenerator.MAX_TOKEN_LENGTH) {
+            throw new InvalidEmailConfirmationTokenException();
+        }
         var tokenHash = tokenGenerator.hash(rawToken);
         var customerId = emailConfirmationStore.findCustomerIdByHash(tokenHash, Instant.now())
             .orElseThrow(InvalidEmailConfirmationTokenException::new);
+
+        if (!emailConfirmationStore.consume(customerId, tokenHash, Instant.now())) {
+            throw new InvalidEmailConfirmationTokenException();
+        }
 
         var customer = customerFinder.findById(customerId)
             .orElseThrow(InvalidEmailConfirmationTokenException::new);
 
         customer.activate();
         customerRegistry.save(customer);
-        emailConfirmationStore.deleteByCustomerId(customerId);
     }
 }

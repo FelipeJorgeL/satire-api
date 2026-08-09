@@ -13,6 +13,7 @@ class OpaqueTokenGenerator {
 
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final int TOKEN_BYTES = 32;
+    static final int MAX_TOKEN_LENGTH = 256;
 
     String generate() {
         var bytes = new byte[TOKEN_BYTES];
@@ -21,6 +22,9 @@ class OpaqueTokenGenerator {
     }
 
     String hash(String rawToken) {
+        if (rawToken == null || rawToken.length() > MAX_TOKEN_LENGTH) {
+            throw new IllegalArgumentException("Opaque token exceeds maximum length");
+        }
         try {
             var digest = MessageDigest.getInstance("SHA-256").digest(rawToken.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(digest);

@@ -10,5 +10,13 @@ public interface RefreshTokenStore {
 
     Optional<UUID> findCustomerIdByHash(String tokenHash, Instant now);
 
+    boolean rotateIfCurrent(
+        UUID customerId,
+        String currentTokenHash,
+        Instant now,
+        String nextTokenHash,
+        Instant nextExpiresAt
+    );
+
     void deleteByCustomerId(UUID customerId);
 }

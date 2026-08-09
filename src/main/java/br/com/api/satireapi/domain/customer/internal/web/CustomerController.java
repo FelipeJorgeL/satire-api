@@ -3,6 +3,7 @@ package br.com.api.satireapi.domain.customer.internal.web;
 import br.com.api.satireapi.domain.customer.internal.dto.request.LoginRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.request.RefreshTokenRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.request.RegisterCustomerRequest;
+import br.com.api.satireapi.domain.customer.internal.dto.request.ResendConfirmationRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.response.LoginResponse;
 import br.com.api.satireapi.domain.customer.internal.usecase.AuthenticateCustomerUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmEmailUseCase;
@@ -10,6 +11,8 @@ import br.com.api.satireapi.domain.customer.internal.usecase.CustomerEmailAlread
 import br.com.api.satireapi.domain.customer.internal.usecase.LogoutUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.RefreshAccessTokenUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.RegisterCustomerUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.RegistrationRateLimiter;
+import br.com.api.satireapi.domain.customer.internal.usecase.ResendConfirmationEmailUseCase;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -21,9 +24,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@Validated
 class CustomerController {
 
     private final RegisterCustomerUseCase registerCustomer;
@@ -31,28 +37,51 @@ class CustomerController {
     private final RefreshAccessTokenUseCase refreshAccessToken;
     private final LogoutUseCase logout;
     private final ConfirmEmailUseCase confirmEmail;
+    private final RegistrationRateLimiter registrationRateLimiter;
+    private final ResendConfirmationEmailUseCase resendConfirmationEmail;
 
     CustomerController(
         RegisterCustomerUseCase registerCustomer,
         AuthenticateCustomerUseCase authenticateCustomer,
         RefreshAccessTokenUseCase refreshAccessToken,
         LogoutUseCase logout,
-        ConfirmEmailUseCase confirmEmail
+        ConfirmEmailUseCase confirmEmail,
+        RegistrationRateLimiter registrationRateLimiter,
+        ResendConfirmationEmailUseCase resendConfirmationEmail
     ) {
         this.registerCustomer = registerCustomer;
         this.authenticateCustomer = authenticateCustomer;
         this.refreshAccessToken = refreshAccessToken;
         this.logout = logout;
         this.confirmEmail = confirmEmail;
+        this.registrationRateLimiter = registrationRateLimiter;
+        this.resendConfirmationEmail = resendConfirmationEmail;
     }
 
     @PostMapping("/register")
-    ResponseEntity<Void> register(@Valid @RequestBody RegisterCustomerRequest request) {
+    ResponseEntity<Void> register(
+        @Valid @RequestBody RegisterCustomerRequest request,
+        HttpServletRequest httpRequest
+    ) {
+        if (!registrationRateLimiter.allow(httpRequest.getRemoteAddr(), request.email(), request.cpf())) {
+            return ResponseEntity.accepted().build();
+        }
         try {
             registerCustomer.execute(request);
         } catch (CustomerEmailAlreadyExistsException | DataIntegrityViolationException ex) {
             // Resposta idêntica à de sucesso: não revela se o e-mail (ou CPF) já está cadastrado.
             // DataIntegrityViolationException cobre a corrida de dois registros simultâneos.
+        }
+        return ResponseEntity.accepted().build();
+    }
+
+    @PostMapping("/confirm/resend")
+    ResponseEntity<Void> resendConfirmation(
+        @Valid @RequestBody ResendConfirmationRequest request,
+        HttpServletRequest httpRequest
+    ) {
+        if (registrationRateLimiter.allow(httpRequest.getRemoteAddr(), request.email(), null)) {
+            resendConfirmationEmail.execute(request);
         }
         return ResponseEntity.accepted().build();
     }
@@ -73,9 +102,34 @@ class CustomerController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/confirm")
+    @PostMapping("/confirm")
     ResponseEntity<String> confirm(@RequestParam String token) {
         confirmEmail.execute(token);
         return ResponseEntity.ok("E-mail confirmado. Você já pode fazer login.");
+    }
+
+    @GetMapping("/confirm")
+    ResponseEntity<String> confirmationPage(@RequestParam String token) {
+        var escapedToken = escapeHtml(token);
+        return ResponseEntity.ok("""
+            <!doctype html>
+            <html lang="pt-BR">
+              <body>
+                <p>Confirme seu e-mail para ativar sua conta.</p>
+                <form method="post" action="/api/v1/auth/confirm">
+                  <input type="hidden" name="token" value="%s">
+                  <button type="submit">Confirmar e-mail</button>
+                </form>
+              </body>
+            </html>
+            """.formatted(escapedToken));
+    }
+
+    private static String escapeHtml(String value) {
+        return value.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#39;");
     }
 }

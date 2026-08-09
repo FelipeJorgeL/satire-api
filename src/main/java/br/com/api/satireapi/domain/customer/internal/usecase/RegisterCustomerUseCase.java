@@ -2,7 +2,6 @@ package br.com.api.satireapi.domain.customer.internal.usecase;
 
 import java.time.Instant;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,7 +9,6 @@ import br.com.api.satireapi.domain.customer.internal.dto.request.RegisterCustome
 import br.com.api.satireapi.domain.customer.internal.dto.response.CustomerResponse;
 import br.com.api.satireapi.domain.customer.internal.mapper.CustomerMapper;
 import br.com.api.satireapi.domain.customer.internal.model.Customer;
-import br.com.api.satireapi.infra.mail.SendGridEmailSender;
 
 @Service
 public class RegisterCustomerUseCase {
@@ -19,29 +17,32 @@ public class RegisterCustomerUseCase {
 
     private final CustomerRegistry customerRegistry;
     private final ProfileFinder profileFinder;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordHasher passwordHasher;
     private final EmailConfirmationStore emailConfirmationStore;
     private final OpaqueTokenGenerator tokenGenerator;
-    private final SendGridEmailSender emailSender;
+    private final ConfirmationEmailOutboxStore outboxStore;
+    private final ConfirmationLinkProtector linkProtector;
     private final String baseUrl;
     private final long confirmationExpirationSeconds;
 
     public RegisterCustomerUseCase(
         CustomerRegistry customerRegistry,
         ProfileFinder profileFinder,
-        PasswordEncoder passwordEncoder,
+        PasswordHasher passwordHasher,
         EmailConfirmationStore emailConfirmationStore,
         OpaqueTokenGenerator tokenGenerator,
-        SendGridEmailSender emailSender,
+        ConfirmationEmailOutboxStore outboxStore,
+        ConfirmationLinkProtector linkProtector,
         @Value("${app.base-url}") String baseUrl,
         @Value("${app.mail.confirmation-expiration}") long confirmationExpirationSeconds
     ) {
         this.customerRegistry = customerRegistry;
         this.profileFinder = profileFinder;
-        this.passwordEncoder = passwordEncoder;
+        this.passwordHasher = passwordHasher;
         this.emailConfirmationStore = emailConfirmationStore;
         this.tokenGenerator = tokenGenerator;
-        this.emailSender = emailSender;
+        this.outboxStore = outboxStore;
+        this.linkProtector = linkProtector;
         this.baseUrl = baseUrl;
         this.confirmationExpirationSeconds = confirmationExpirationSeconds;
     }
@@ -51,7 +52,7 @@ public class RegisterCustomerUseCase {
         var normalizedEmail = Customer.normalizeEmail(request.email());
         // Hash antes da checagem de duplicidade: os dois caminhos pagam o custo de BCrypt,
         // impedindo enumeração de e-mails pela diferença de tempo de resposta.
-        var passwordHash = passwordEncoder.encode(request.password());
+        var passwordHash = passwordHasher.encode(request.password());
         if (customerRegistry.existsByEmail(normalizedEmail)) {
             throw new CustomerEmailAlreadyExistsException();
         }
@@ -73,7 +74,7 @@ public class RegisterCustomerUseCase {
         emailConfirmationStore.save(saved.getId(), tokenGenerator.hash(rawToken), expiresAt);
 
         var confirmationLink = baseUrl + "/api/v1/auth/confirm?token=" + rawToken;
-        emailSender.sendEmailConfirmation(saved.getEmail(), confirmationLink);
+        outboxStore.enqueue(saved.getId(), saved.getEmail(), linkProtector.protect(confirmationLink));
 
         return CustomerMapper.toResponse(saved);
     }
