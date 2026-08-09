@@ -48,7 +48,7 @@ CREATE TABLE usuarios_perfis (
 -- token_hash guarda SHA-256 hex do token opaco entregue ao cliente; o valor bruto nunca é persistido.
 CREATE TABLE refresh_tokens (
     usuario_id UUID PRIMARY KEY,
-    token_hash CHAR(64) NOT NULL,
+    token_hash VARCHAR(64) NOT NULL,
     expira_em TIMESTAMPTZ NOT NULL,
     criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_refresh_tokens_usuario FOREIGN KEY (usuario_id)
@@ -59,7 +59,7 @@ CREATE TABLE refresh_tokens (
 -- token_hash guarda SHA-256 hex do token opaco enviado por e-mail; o valor bruto nunca é persistido.
 CREATE TABLE confirmacoes_email (
     usuario_id UUID PRIMARY KEY,
-    token_hash CHAR(64) NOT NULL,
+    token_hash VARCHAR(64) NOT NULL,
     expira_em TIMESTAMPTZ NOT NULL,
     criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_confirmacoes_email_usuario FOREIGN KEY (usuario_id)
