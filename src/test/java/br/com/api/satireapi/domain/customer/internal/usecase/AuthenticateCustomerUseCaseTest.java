@@ -14,25 +14,23 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import br.com.api.satireapi.domain.customer.internal.dto.request.LoginRequest;
 import br.com.api.satireapi.domain.customer.internal.model.Customer;
 import br.com.api.satireapi.domain.customer.internal.model.Profile;
-import br.com.api.satireapi.infra.security.jwt.JwtTokenService;
 
 class AuthenticateCustomerUseCaseTest {
 
     private final CustomerFinder customerFinder = mock(CustomerFinder.class);
-    private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
-    private final JwtTokenService jwtTokenService = mock(JwtTokenService.class);
+    private final PasswordHasher passwordHasher = mock(PasswordHasher.class);
+    private final AccessTokenIssuer accessTokenIssuer = mock(AccessTokenIssuer.class);
     private final LoginAttemptTracker loginAttemptTracker = mock(LoginAttemptTracker.class);
     private final RefreshTokenStore refreshTokenStore = mock(RefreshTokenStore.class);
     private final OpaqueTokenGenerator tokenGenerator = new OpaqueTokenGenerator();
     private final AuthenticateCustomerUseCase useCase = new AuthenticateCustomerUseCase(
         customerFinder,
-        passwordEncoder,
-        jwtTokenService,
+        passwordHasher,
+        accessTokenIssuer,
         loginAttemptTracker,
         refreshTokenStore,
         tokenGenerator,
@@ -53,10 +51,10 @@ class AuthenticateCustomerUseCaseTest {
         when(customer.getProfiles()).thenReturn(new LinkedHashSet<>(List.of(profile)));
 
         when(customerFinder.findByEmail("felipe@example.com")).thenReturn(Optional.of(customer));
-        when(passwordEncoder.matches("safe-password", "encoded-password")).thenReturn(true);
-        when(jwtTokenService.generate(customerId.toString(), "felipe@example.com", List.of("CLIENTE")))
+        when(passwordHasher.matches("safe-password", "encoded-password")).thenReturn(true);
+        when(accessTokenIssuer.generate(customerId.toString(), "felipe@example.com", List.of("CLIENTE")))
             .thenReturn("jwt-token");
-        when(jwtTokenService.expirationSeconds()).thenReturn(3600L);
+        when(accessTokenIssuer.expirationSeconds()).thenReturn(3600L);
 
         var response = useCase.execute(new LoginRequest(" FELIPE@EXAMPLE.COM ", "safe-password"));
 
@@ -73,7 +71,7 @@ class AuthenticateCustomerUseCaseTest {
         when(customer.getPasswordHash()).thenReturn("encoded-password");
 
         when(customerFinder.findByEmail("felipe@example.com")).thenReturn(Optional.of(customer));
-        when(passwordEncoder.matches("wrong-password", "encoded-password")).thenReturn(false);
+        when(passwordHasher.matches("wrong-password", "encoded-password")).thenReturn(false);
 
         assertThrows(InvalidCredentialsException.class,
             () -> useCase.execute(new LoginRequest("felipe@example.com", "wrong-password")));
@@ -88,7 +86,7 @@ class AuthenticateCustomerUseCaseTest {
             () -> useCase.execute(new LoginRequest("ghost@example.com", "any-password")));
 
         // Custo de BCrypt deve ser pago mesmo sem conta: bloqueia enumeração por timing.
-        verify(passwordEncoder).matches(eq("any-password"), any());
+        verify(passwordHasher).matches(eq("any-password"), any());
         // Falha em e-mail inexistente também conta: o 429 não pode virar oráculo de existência.
         verify(loginAttemptTracker).recordFailure("ghost@example.com");
     }

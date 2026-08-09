@@ -8,7 +8,7 @@ meta {
   ]
 }
 
-get {
+post {
   url: {{BASE_URL}}/api/v1/auth/confirm?token={{CONFIRMATION_TOKEN}}
   body: none
   auth: none
@@ -19,17 +19,20 @@ params:query {
 }
 
 docs {
-  No automated assertion here on purpose — this depends on a token you can only get
-  from the real e-mail SendGrid sends (from satire.noreply@gmail.com) to CUSTOMER_EMAIL.
+  No automated assertion here on purpose - this depends on a token you can only get
+  from the real email SendGrid sends to CUSTOMER_EMAIL.
 
   Manual setup:
 
   1. Run "Register customer" first.
-  2. Open the CUSTOMER_EMAIL inbox, find the confirmation e-mail, and copy the token
+  2. Open the CUSTOMER_EMAIL inbox, find the confirmation email, and copy the token
      from the link's "?token=" query param.
   3. Paste it into the CONFIRMATION_TOKEN environment variable.
-  4. Run this request — 200 with a plain-text confirmation message means it worked.
+  4. Run this POST request; a 200 response means the account was activated.
 
-  Without this step, "Login customer" below returns 401: accounts start inactive
+  GET only shows a confirmation page and never activates the account. This prevents
+  link scanners and browser prefetchers from consuming the one-time token.
+
+  Without this step, "Login customer" returns 401: accounts start inactive
   (ativo = false) until confirmed. The token is single-use and expires after 24h.
 }

@@ -14,6 +14,7 @@ import br.com.api.satireapi.domain.customer.dto.CustomerSummary;
 import br.com.api.satireapi.domain.customer.internal.dto.request.LoginRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.request.RefreshTokenRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.request.RegisterCustomerRequest;
+import br.com.api.satireapi.domain.customer.internal.dto.request.ResendConfirmationRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.response.LoginResponse;
 import br.com.api.satireapi.domain.customer.internal.usecase.AuthenticateCustomerUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmEmailUseCase;
@@ -24,6 +25,8 @@ import br.com.api.satireapi.domain.customer.internal.usecase.InvalidRefreshToken
 import br.com.api.satireapi.domain.customer.internal.usecase.LogoutUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.RefreshAccessTokenUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.RegisterCustomerUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.RegistrationRateLimiter;
+import br.com.api.satireapi.domain.customer.internal.usecase.ResendConfirmationEmailUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.TooManyLoginAttemptsException;
 import br.com.api.satireapi.infra.security.SecurityConfig;
 import br.com.api.satireapi.infra.security.jwt.JwtAuthenticationFilter;
@@ -71,6 +74,12 @@ class CustomerSecurityWebTest {
 
     @MockitoBean
     private ConfirmEmailUseCase confirmEmailUseCase;
+
+    @MockitoBean
+    private RegistrationRateLimiter registrationRateLimiter;
+
+    @MockitoBean
+    private ResendConfirmationEmailUseCase resendConfirmationEmailUseCase;
 
     @MockitoBean
     private CustomerGateway customerGateway;
@@ -159,8 +168,22 @@ class CustomerSecurityWebTest {
     }
 
     @Test
-    void confirmWithValidTokenReturnsOk() throws Exception {
+    void confirmationLinkGetDoesNotActivateAccount() throws Exception {
         mockMvc.perform(get("/api/v1/auth/confirm").param("token", "valid-confirmation-token"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void resendConfirmationReturnsGenericAcceptedResponse() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/confirm/resend")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new ResendConfirmationRequest("felipe@example.com"))))
+            .andExpect(status().isAccepted());
+    }
+
+    @Test
+    void confirmWithValidTokenReturnsOk() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/confirm").param("token", "valid-confirmation-token"))
             .andExpect(status().isOk());
     }
 
@@ -169,7 +192,7 @@ class CustomerSecurityWebTest {
         org.mockito.Mockito.doThrow(new InvalidEmailConfirmationTokenException())
             .when(confirmEmailUseCase).execute("invalid-token");
 
-        mockMvc.perform(get("/api/v1/auth/confirm").param("token", "invalid-token"))
+        mockMvc.perform(post("/api/v1/auth/confirm").param("token", "invalid-token"))
             .andExpect(status().isBadRequest());
     }
 
