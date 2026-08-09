@@ -9,7 +9,7 @@ import java.util.HexFormat;
 import org.springframework.stereotype.Component;
 
 @Component
-class RefreshTokenGenerator {
+class OpaqueTokenGenerator {
 
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final int TOKEN_BYTES = 32;

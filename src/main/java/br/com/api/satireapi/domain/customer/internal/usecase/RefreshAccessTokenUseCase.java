@@ -15,14 +15,14 @@ import br.com.api.satireapi.infra.security.jwt.JwtTokenService;
 public class RefreshAccessTokenUseCase {
 
     private final RefreshTokenStore refreshTokenStore;
-    private final RefreshTokenGenerator tokenGenerator;
+    private final OpaqueTokenGenerator tokenGenerator;
     private final CustomerFinder customerFinder;
     private final JwtTokenService jwtTokenService;
     private final long refreshExpirationSeconds;
 
     public RefreshAccessTokenUseCase(
         RefreshTokenStore refreshTokenStore,
-        RefreshTokenGenerator tokenGenerator,
+        OpaqueTokenGenerator tokenGenerator,
         CustomerFinder customerFinder,
         JwtTokenService jwtTokenService,
         @Value("${app.jwt.refresh-expiration}") long refreshExpirationSeconds

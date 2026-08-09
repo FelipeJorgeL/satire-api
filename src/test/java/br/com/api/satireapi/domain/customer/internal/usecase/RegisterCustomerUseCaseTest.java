@@ -15,16 +15,25 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import br.com.api.satireapi.domain.customer.internal.dto.request.RegisterCustomerRequest;
 import br.com.api.satireapi.domain.customer.internal.model.Customer;
 import br.com.api.satireapi.domain.customer.internal.model.Profile;
+import br.com.api.satireapi.infra.mail.SendGridEmailSender;
 
 class RegisterCustomerUseCaseTest {
 
     private final CustomerRegistry customerRegistry = mock(CustomerRegistry.class);
     private final ProfileFinder profileFinder = mock(ProfileFinder.class);
     private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
+    private final EmailConfirmationStore emailConfirmationStore = mock(EmailConfirmationStore.class);
+    private final OpaqueTokenGenerator tokenGenerator = new OpaqueTokenGenerator();
+    private final SendGridEmailSender emailSender = mock(SendGridEmailSender.class);
     private final RegisterCustomerUseCase useCase = new RegisterCustomerUseCase(
         customerRegistry,
         profileFinder,
-        passwordEncoder
+        passwordEncoder,
+        emailConfirmationStore,
+        tokenGenerator,
+        emailSender,
+        "http://localhost:8080",
+        86_400L
     );
 
     @Test

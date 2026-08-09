@@ -22,7 +22,7 @@ public class AuthenticateCustomerUseCase {
     private final JwtTokenService jwtTokenService;
     private final LoginAttemptTracker loginAttemptTracker;
     private final RefreshTokenStore refreshTokenStore;
-    private final RefreshTokenGenerator tokenGenerator;
+    private final OpaqueTokenGenerator tokenGenerator;
     private final long refreshExpirationSeconds;
     private final String timingEqualizerHash;
 
@@ -32,7 +32,7 @@ public class AuthenticateCustomerUseCase {
         JwtTokenService jwtTokenService,
         LoginAttemptTracker loginAttemptTracker,
         RefreshTokenStore refreshTokenStore,
-        RefreshTokenGenerator tokenGenerator,
+        OpaqueTokenGenerator tokenGenerator,
         @Value("${app.jwt.refresh-expiration}") long refreshExpirationSeconds
     ) {
         this.customerFinder = customerFinder;

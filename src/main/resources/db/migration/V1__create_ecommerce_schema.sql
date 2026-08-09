@@ -9,7 +9,8 @@ CREATE TABLE usuarios (
     senha_hash VARCHAR(255) NOT NULL,
     cpf CHAR(11) UNIQUE,
     telefone VARCHAR(20),
-    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    -- Nasce inativo: só fica TRUE após confirmar o e-mail (ver confirmacoes_email).
+    ativo BOOLEAN NOT NULL DEFAULT FALSE,
     criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     excluido_em TIMESTAMPTZ,
@@ -51,6 +52,17 @@ CREATE TABLE refresh_tokens (
     expira_em TIMESTAMPTZ NOT NULL,
     criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_refresh_tokens_usuario FOREIGN KEY (usuario_id)
+        REFERENCES usuarios (id) ON DELETE CASCADE
+);
+
+-- Confirmação de e-mail: uma linha por cliente (novo registro/reenvio substitui a anterior).
+-- token_hash guarda SHA-256 hex do token opaco enviado por e-mail; o valor bruto nunca é persistido.
+CREATE TABLE confirmacoes_email (
+    usuario_id UUID PRIMARY KEY,
+    token_hash CHAR(64) NOT NULL,
+    expira_em TIMESTAMPTZ NOT NULL,
+    criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_confirmacoes_email_usuario FOREIGN KEY (usuario_id)
         REFERENCES usuarios (id) ON DELETE CASCADE
 );
 
@@ -381,6 +393,7 @@ CREATE UNIQUE INDEX uq_usuarios_email_normalizado
 CREATE INDEX idx_usuarios_perfis_usuario_id ON usuarios_perfis (usuario_id);
 CREATE INDEX idx_usuarios_perfis_perfil_id ON usuarios_perfis (perfil_id);
 CREATE UNIQUE INDEX idx_refresh_tokens_hash ON refresh_tokens (token_hash);
+CREATE UNIQUE INDEX idx_confirmacoes_email_hash ON confirmacoes_email (token_hash);
 CREATE INDEX idx_enderecos_usuario_id ON enderecos (usuario_id);
 CREATE UNIQUE INDEX uq_enderecos_principal_por_usuario
     ON enderecos (usuario_id) WHERE principal = TRUE;
