@@ -36,13 +36,15 @@ class ConfirmEmailUseCaseTest {
 
         when(emailConfirmationStore.findCustomerIdByHash(eq(tokenHash), any(Instant.class)))
             .thenReturn(Optional.of(customerId));
+        when(emailConfirmationStore.consume(eq(customerId), eq(tokenHash), any(Instant.class)))
+            .thenReturn(true);
         when(customerFinder.findById(customerId)).thenReturn(Optional.of(customer));
 
         useCase.execute(rawToken);
 
         verify(customer).activate();
         verify(customerRegistry).save(customer);
-        verify(emailConfirmationStore).deleteByCustomerId(customerId);
+        verify(emailConfirmationStore).consume(eq(customerId), eq(tokenHash), any(Instant.class));
     }
 
     @Test
@@ -50,6 +52,20 @@ class ConfirmEmailUseCaseTest {
         when(emailConfirmationStore.findCustomerIdByHash(any(), any())).thenReturn(Optional.empty());
 
         assertThrows(InvalidEmailConfirmationTokenException.class, () -> useCase.execute("unknown-token"));
+        verify(customerRegistry, org.mockito.Mockito.never()).save(any());
+    }
+
+    @Test
+    void rejectsSecondUseWhenAtomicConsumptionLosesTheRace() {
+        var customerId = UUID.randomUUID();
+        var rawToken = "already-consumed-token";
+        var tokenHash = tokenGenerator.hash(rawToken);
+        when(emailConfirmationStore.findCustomerIdByHash(eq(tokenHash), any(Instant.class)))
+            .thenReturn(Optional.of(customerId));
+        when(emailConfirmationStore.consume(eq(customerId), eq(tokenHash), any(Instant.class)))
+            .thenReturn(false);
+
+        assertThrows(InvalidEmailConfirmationTokenException.class, () -> useCase.execute(rawToken));
         verify(customerRegistry, org.mockito.Mockito.never()).save(any());
     }
 }
