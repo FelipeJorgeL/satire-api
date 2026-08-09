@@ -1,14 +1,19 @@
 package br.com.api.satireapi.domain.customer.internal.web;
 
 import br.com.api.satireapi.domain.customer.internal.dto.request.LoginRequest;
+import br.com.api.satireapi.domain.customer.internal.dto.request.RefreshTokenRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.request.RegisterCustomerRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.response.LoginResponse;
 import br.com.api.satireapi.domain.customer.internal.usecase.AuthenticateCustomerUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.CustomerEmailAlreadyExistsException;
+import br.com.api.satireapi.domain.customer.internal.usecase.LogoutUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.RefreshAccessTokenUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.RegisterCustomerUseCase;
 import jakarta.validation.Valid;
+import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,10 +25,19 @@ class CustomerController {
 
     private final RegisterCustomerUseCase registerCustomer;
     private final AuthenticateCustomerUseCase authenticateCustomer;
+    private final RefreshAccessTokenUseCase refreshAccessToken;
+    private final LogoutUseCase logout;
 
-    CustomerController(RegisterCustomerUseCase registerCustomer, AuthenticateCustomerUseCase authenticateCustomer) {
+    CustomerController(
+        RegisterCustomerUseCase registerCustomer,
+        AuthenticateCustomerUseCase authenticateCustomer,
+        RefreshAccessTokenUseCase refreshAccessToken,
+        LogoutUseCase logout
+    ) {
         this.registerCustomer = registerCustomer;
         this.authenticateCustomer = authenticateCustomer;
+        this.refreshAccessToken = refreshAccessToken;
+        this.logout = logout;
     }
 
     @PostMapping("/register")
@@ -40,5 +54,16 @@ class CustomerController {
     @PostMapping("/login")
     ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authenticateCustomer.execute(request));
+    }
+
+    @PostMapping("/refresh")
+    ResponseEntity<LoginResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(refreshAccessToken.execute(request));
+    }
+
+    @PostMapping("/logout")
+    ResponseEntity<Void> logout(@AuthenticationPrincipal UUID customerId) {
+        logout.execute(customerId);
+        return ResponseEntity.noContent().build();
     }
 }
