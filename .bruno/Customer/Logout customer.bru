@@ -1,0 +1,34 @@
+meta {
+  name: Logout customer
+  type: http
+  seq: 12
+  tags: [
+    customer
+    smoke
+  ]
+}
+
+post {
+  url: {{BASE_URL}}/api/v1/auth/logout
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+}
+
+tests {
+  test("returns 204 No Content", function () {
+    expect(res.status).to.equal(204);
+  });
+}
+
+docs {
+  Run "Login customer" (and optionally "Refresh access token") first.
+  Revokes the refresh session for this customer — running "Refresh access token"
+  again afterwards with the same REFRESH_TOKEN returns 401. The access token itself
+  keeps working until it naturally expires (up to 1h) — logout does not blacklist it.
+
+  Run this one last: it invalidates REFRESH_TOKEN for anything below it in the collection.
+}

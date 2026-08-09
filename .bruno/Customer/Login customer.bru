@@ -1,7 +1,7 @@
 meta {
   name: Login customer
   type: http
-  seq: 3
+  seq: 4
   tags: [
     customer
     smoke
@@ -28,6 +28,7 @@ body:json {
 script:post-response {
   if (res.status === 200) {
     bru.setEnvVar("ACCESS_TOKEN", res.body.accessToken);
+    bru.setEnvVar("REFRESH_TOKEN", res.body.refreshToken);
   }
 }
 
@@ -36,14 +37,16 @@ tests {
     expect(res.status).to.equal(200);
   });
 
-  test("returns a bearer token", function () {
+  test("returns a bearer token and a refresh token", function () {
     expect(res.body.tokenType).to.equal("Bearer");
     expect(res.body.accessToken).to.be.a("string");
+    expect(res.body.refreshToken).to.be.a("string");
   });
 }
 
 docs {
-  Run "Register customer" first so CUSTOMER_EMAIL/CUSTOMER_PASSWORD exist.
-  Saves the token into ACCESS_TOKEN for "Get authenticated customer" and
-  "Reject customer lookup without admin profile" below.
+  Run "Register customer" then "Confirm email" first — login fails with 401 on an
+  inactive (unconfirmed) account.
+  Saves accessToken into ACCESS_TOKEN and refreshToken into REFRESH_TOKEN, used by
+  "Get authenticated customer", "Refresh access token" and "Logout customer" below.
 }
