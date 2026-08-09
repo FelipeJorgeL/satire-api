@@ -1,5 +1,7 @@
 package br.com.api.satireapi.domain.customer.internal.usecase;
 
+import java.time.Instant;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,24 +21,33 @@ public class AuthenticateCustomerUseCase {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenService jwtTokenService;
     private final LoginAttemptTracker loginAttemptTracker;
+    private final RefreshTokenStore refreshTokenStore;
+    private final RefreshTokenGenerator tokenGenerator;
+    private final long refreshExpirationSeconds;
     private final String timingEqualizerHash;
 
     public AuthenticateCustomerUseCase(
         CustomerFinder customerFinder,
         PasswordEncoder passwordEncoder,
         JwtTokenService jwtTokenService,
-        LoginAttemptTracker loginAttemptTracker
+        LoginAttemptTracker loginAttemptTracker,
+        RefreshTokenStore refreshTokenStore,
+        RefreshTokenGenerator tokenGenerator,
+        @Value("${app.jwt.refresh-expiration}") long refreshExpirationSeconds
     ) {
         this.customerFinder = customerFinder;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenService = jwtTokenService;
         this.loginAttemptTracker = loginAttemptTracker;
+        this.refreshTokenStore = refreshTokenStore;
+        this.tokenGenerator = tokenGenerator;
+        this.refreshExpirationSeconds = refreshExpirationSeconds;
         // Hash sacrificial: paga o custo de BCrypt mesmo quando o e-mail não existe,
         // impedindo enumeração de contas pela diferença de tempo de resposta.
         this.timingEqualizerHash = passwordEncoder.encode(TIMING_EQUALIZER_PASSWORD);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public LoginResponse execute(LoginRequest request) {
         var normalizedEmail = Customer.normalizeEmail(request.email());
         if (loginAttemptTracker.isBlocked(normalizedEmail)) {
@@ -56,8 +67,18 @@ public class AuthenticateCustomerUseCase {
         loginAttemptTracker.recordSuccess(normalizedEmail);
 
         var profiles = authenticated.getProfiles().stream().map(Profile::getName).toList();
-        var token = jwtTokenService.generate(authenticated.getId().toString(), authenticated.getEmail(), profiles);
+        var accessToken = jwtTokenService.generate(authenticated.getId().toString(), authenticated.getEmail(), profiles);
 
-        return new LoginResponse(token, "Bearer", jwtTokenService.expirationSeconds());
+        var rawRefreshToken = tokenGenerator.generate();
+        var refreshExpiresAt = Instant.now().plusSeconds(refreshExpirationSeconds);
+        refreshTokenStore.save(authenticated.getId(), tokenGenerator.hash(rawRefreshToken), refreshExpiresAt);
+
+        return new LoginResponse(
+            accessToken,
+            "Bearer",
+            jwtTokenService.expirationSeconds(),
+            rawRefreshToken,
+            refreshExpirationSeconds
+        );
     }
 }
