@@ -9,8 +9,7 @@ CREATE TABLE usuarios (
     senha_hash VARCHAR(255) NOT NULL,
     cpf CHAR(11) UNIQUE,
     telefone VARCHAR(20),
-    -- Nasce inativo: só fica TRUE após confirmar o e-mail (ver confirmacoes_email).
-    ativo BOOLEAN NOT NULL DEFAULT FALSE,
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
     criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     excluido_em TIMESTAMPTZ,
@@ -42,28 +41,6 @@ CREATE TABLE usuarios_perfis (
         REFERENCES usuarios (id) ON DELETE CASCADE,
     CONSTRAINT fk_usuarios_perfis_perfil FOREIGN KEY (perfil_id)
         REFERENCES perfis (id) ON DELETE RESTRICT
-);
-
--- Sessão de refresh token: uma linha por cliente (login/refresh novo substitui a anterior).
--- token_hash guarda SHA-256 hex do token opaco entregue ao cliente; o valor bruto nunca é persistido.
-CREATE TABLE refresh_tokens (
-    usuario_id UUID PRIMARY KEY,
-    token_hash VARCHAR(64) NOT NULL,
-    expira_em TIMESTAMPTZ NOT NULL,
-    criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_refresh_tokens_usuario FOREIGN KEY (usuario_id)
-        REFERENCES usuarios (id) ON DELETE CASCADE
-);
-
--- Confirmação de e-mail: uma linha por cliente (novo registro/reenvio substitui a anterior).
--- token_hash guarda SHA-256 hex do token opaco enviado por e-mail; o valor bruto nunca é persistido.
-CREATE TABLE confirmacoes_email (
-    usuario_id UUID PRIMARY KEY,
-    token_hash VARCHAR(64) NOT NULL,
-    expira_em TIMESTAMPTZ NOT NULL,
-    criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_confirmacoes_email_usuario FOREIGN KEY (usuario_id)
-        REFERENCES usuarios (id) ON DELETE CASCADE
 );
 
 CREATE TABLE enderecos (
@@ -392,8 +369,6 @@ CREATE UNIQUE INDEX uq_usuarios_email_normalizado
     ON usuarios (LOWER(BTRIM(email)));
 CREATE INDEX idx_usuarios_perfis_usuario_id ON usuarios_perfis (usuario_id);
 CREATE INDEX idx_usuarios_perfis_perfil_id ON usuarios_perfis (perfil_id);
-CREATE UNIQUE INDEX idx_refresh_tokens_hash ON refresh_tokens (token_hash);
-CREATE UNIQUE INDEX idx_confirmacoes_email_hash ON confirmacoes_email (token_hash);
 CREATE INDEX idx_enderecos_usuario_id ON enderecos (usuario_id);
 CREATE UNIQUE INDEX uq_enderecos_principal_por_usuario
     ON enderecos (usuario_id) WHERE principal = TRUE;
