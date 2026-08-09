@@ -18,9 +18,14 @@ spring:
       include-message: never
 
 app:
+  base-url: ${APP_BASE_URL:http://localhost:8080}
   jwt:
     secret: ${JWT_SECRET}
     expiration: ${JWT_EXPIRATION:3600}
     refresh-expiration: ${JWT_REFRESH_EXPIRATION:2592000}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  mail:
+    sendgrid-api-key: ${SENDGRID_API_KEY}
+    from: ${MAIL_FROM:satire.noreply@gmail.com}
+    confirmation-expiration: ${EMAIL_CONFIRMATION_EXPIRATION:86400}

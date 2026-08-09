@@ -16,8 +16,10 @@ import br.com.api.satireapi.domain.customer.internal.dto.request.RefreshTokenReq
 import br.com.api.satireapi.domain.customer.internal.dto.request.RegisterCustomerRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.response.LoginResponse;
 import br.com.api.satireapi.domain.customer.internal.usecase.AuthenticateCustomerUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmEmailUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.CustomerEmailAlreadyExistsException;
 import br.com.api.satireapi.domain.customer.internal.usecase.InvalidCredentialsException;
+import br.com.api.satireapi.domain.customer.internal.usecase.InvalidEmailConfirmationTokenException;
 import br.com.api.satireapi.domain.customer.internal.usecase.InvalidRefreshTokenException;
 import br.com.api.satireapi.domain.customer.internal.usecase.LogoutUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.RefreshAccessTokenUseCase;
@@ -66,6 +68,9 @@ class CustomerSecurityWebTest {
 
     @MockitoBean
     private LogoutUseCase logoutUseCase;
+
+    @MockitoBean
+    private ConfirmEmailUseCase confirmEmailUseCase;
 
     @MockitoBean
     private CustomerGateway customerGateway;
@@ -151,6 +156,21 @@ class CustomerSecurityWebTest {
 
         mockMvc.perform(post("/api/v1/auth/logout").header("Authorization", "Bearer " + token))
             .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void confirmWithValidTokenReturnsOk() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/confirm").param("token", "valid-confirmation-token"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void confirmWithInvalidTokenReturnsBadRequest() throws Exception {
+        org.mockito.Mockito.doThrow(new InvalidEmailConfirmationTokenException())
+            .when(confirmEmailUseCase).execute("invalid-token");
+
+        mockMvc.perform(get("/api/v1/auth/confirm").param("token", "invalid-token"))
+            .andExpect(status().isBadRequest());
     }
 
     @Test

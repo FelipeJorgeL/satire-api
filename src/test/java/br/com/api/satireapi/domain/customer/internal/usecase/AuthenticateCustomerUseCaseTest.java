@@ -28,7 +28,7 @@ class AuthenticateCustomerUseCaseTest {
     private final JwtTokenService jwtTokenService = mock(JwtTokenService.class);
     private final LoginAttemptTracker loginAttemptTracker = mock(LoginAttemptTracker.class);
     private final RefreshTokenStore refreshTokenStore = mock(RefreshTokenStore.class);
-    private final RefreshTokenGenerator tokenGenerator = new RefreshTokenGenerator();
+    private final OpaqueTokenGenerator tokenGenerator = new OpaqueTokenGenerator();
     private final AuthenticateCustomerUseCase useCase = new AuthenticateCustomerUseCase(
         customerFinder,
         passwordEncoder,

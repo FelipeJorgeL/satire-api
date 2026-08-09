@@ -24,7 +24,7 @@ import br.com.api.satireapi.infra.security.jwt.JwtTokenService;
 class RefreshAccessTokenUseCaseTest {
 
     private final RefreshTokenStore refreshTokenStore = mock(RefreshTokenStore.class);
-    private final RefreshTokenGenerator tokenGenerator = new RefreshTokenGenerator();
+    private final OpaqueTokenGenerator tokenGenerator = new OpaqueTokenGenerator();
     private final CustomerFinder customerFinder = mock(CustomerFinder.class);
     private final JwtTokenService jwtTokenService = mock(JwtTokenService.class);
     private final RefreshAccessTokenUseCase useCase = new RefreshAccessTokenUseCase(
