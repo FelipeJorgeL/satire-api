@@ -82,7 +82,44 @@ public class Customer {
     }
 
     public void assignProfile(Profile profile) {
-        profiles.add(profile);
+        if (profiles.add(profile)) {
+            touch();
+        }
+    }
+
+    public void removeProfile(Profile profile) {
+        if (profiles.remove(profile)) {
+            touch();
+        }
+    }
+
+    public boolean hasProfile(String profileName) {
+        return profiles.stream().anyMatch(profile -> profile.getName().equals(profileName));
+    }
+
+    public void updateAdministrativeData(String name, String email, String cpf, String phone) {
+        if (name != null) {
+            this.name = name.trim();
+        }
+        if (email != null) {
+            this.email = normalizeEmail(email);
+        }
+        if (cpf != null) {
+            this.cpf = blankToNull(cpf);
+        }
+        if (phone != null) {
+            this.phone = blankToNull(phone);
+        }
+        touch();
+    }
+
+    public void changeStatus(boolean active) {
+        if (this.active == active) {
+            return;
+        }
+        this.active = active;
+        this.deletedAt = active ? null : OffsetDateTime.now();
+        touch();
     }
 
     public UUID getId() {
@@ -117,6 +154,10 @@ public class Customer {
         return createdAt;
     }
 
+    public OffsetDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
     public Set<Profile> getProfiles() {
         return Collections.unmodifiableSet(profiles);
     }
@@ -127,5 +168,9 @@ public class Customer {
 
     private static String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private void touch() {
+        this.updatedAt = OffsetDateTime.now();
     }
 }

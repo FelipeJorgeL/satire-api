@@ -1,11 +1,11 @@
 package br.com.api.satireapi.infra.security.jwt;
 
+import br.com.api.satireapi.domain.customer.CustomerAuthenticationGateway;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,9 +19,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtTokenService jwtTokenService;
+    private final CustomerAuthenticationGateway customerAuthenticationGateway;
 
-    public JwtAuthenticationFilter(JwtTokenService jwtTokenService) {
+    public JwtAuthenticationFilter(
+        JwtTokenService jwtTokenService,
+        CustomerAuthenticationGateway customerAuthenticationGateway
+    ) {
         this.jwtTokenService = jwtTokenService;
+        this.customerAuthenticationGateway = customerAuthenticationGateway;
     }
 
     @Override
@@ -30,6 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         HttpServletResponse response,
         FilterChain filterChain
     ) throws ServletException, IOException {
+        SecurityContextHolder.clearContext();
         var header = request.getHeader("Authorization");
         if (header != null && header.startsWith(BEARER_PREFIX)) {
             var token = header.substring(BEARER_PREFIX.length());
@@ -48,7 +54,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @SuppressWarnings("unchecked")
     private void authenticate(io.jsonwebtoken.Claims claims) {
         var customerId = UUID.fromString(claims.getSubject());
-        var profiles = (List<String>) claims.get("profiles", List.class);
+        var customer = customerAuthenticationGateway.findById(customerId)
+            .filter(existingCustomer -> existingCustomer.active())
+            .orElseThrow(() -> new IllegalArgumentException("Customer is inactive or does not exist"));
+        var profiles = customer.profiles();
         var authorities = profiles.stream()
             .map(profile -> new SimpleGrantedAuthority("ROLE_" + profile))
             .toList();
