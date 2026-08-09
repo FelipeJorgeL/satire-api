@@ -1,0 +1,35 @@
+meta {
+  name: Confirm email
+  type: http
+  seq: 3
+  tags: [
+    customer
+    manual
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/auth/confirm?token={{CONFIRMATION_TOKEN}}
+  body: none
+  auth: none
+}
+
+params:query {
+  token: {{CONFIRMATION_TOKEN}}
+}
+
+docs {
+  No automated assertion here on purpose — this depends on a token you can only get
+  from the real e-mail SendGrid sends (from satire.noreply@gmail.com) to CUSTOMER_EMAIL.
+
+  Manual setup:
+
+  1. Run "Register customer" first.
+  2. Open the CUSTOMER_EMAIL inbox, find the confirmation e-mail, and copy the token
+     from the link's "?token=" query param.
+  3. Paste it into the CONFIRMATION_TOKEN environment variable.
+  4. Run this request — 200 with a plain-text confirmation message means it worked.
+
+  Without this step, "Login customer" below returns 401: accounts start inactive
+  (ativo = false) until confirmed. The token is single-use and expires after 24h.
+}
