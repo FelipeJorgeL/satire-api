@@ -72,7 +72,7 @@ public class Customer {
         this.passwordHash = passwordHash;
         this.cpf = blankToNull(cpf);
         this.phone = blankToNull(phone);
-        this.active = true;
+        this.active = false;
         this.createdAt = OffsetDateTime.now();
         this.updatedAt = this.createdAt;
     }
@@ -83,6 +83,10 @@ public class Customer {
 
     public void assignProfile(Profile profile) {
         profiles.add(profile);
+    }
+
+    public void activate() {
+        this.active = true;
     }
 
     public UUID getId() {
