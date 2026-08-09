@@ -1,0 +1,50 @@
+meta {
+  name: Refresh access token
+  type: http
+  seq: 6
+  tags: [
+    customer
+    smoke
+  ]
+}
+
+post {
+  url: {{BASE_URL}}/api/v1/auth/refresh
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "refreshToken": "{{REFRESH_TOKEN}}"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("ACCESS_TOKEN", res.body.accessToken);
+    bru.setEnvVar("REFRESH_TOKEN", res.body.refreshToken);
+  }
+}
+
+tests {
+  test("returns 200 OK", function () {
+    expect(res.status).to.equal(200);
+  });
+
+  test("rotates both tokens", function () {
+    expect(res.body.accessToken).to.be.a("string");
+    expect(res.body.refreshToken).to.be.a("string");
+  });
+}
+
+docs {
+  Run "Login customer" first so REFRESH_TOKEN is set.
+  Consumes the current refresh token and issues a new access + refresh token pair
+  (rotation) — running this request twice in a row without re-running "Login customer"
+  in between still works, since each run saves the new REFRESH_TOKEN for the next one.
+}
