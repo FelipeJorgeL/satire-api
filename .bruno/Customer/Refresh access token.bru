@@ -1,7 +1,7 @@
 meta {
-  name: Login customer
+  name: Refresh access token
   type: http
-  seq: 4
+  seq: 6
   tags: [
     customer
     smoke
@@ -9,7 +9,7 @@ meta {
 }
 
 post {
-  url: {{BASE_URL}}/api/v1/auth/login
+  url: {{BASE_URL}}/api/v1/auth/refresh
   body: json
   auth: none
 }
@@ -20,8 +20,7 @@ headers {
 
 body:json {
   {
-    "email": "{{CUSTOMER_EMAIL}}",
-    "password": "{{CUSTOMER_PASSWORD}}"
+    "refreshToken": "{{REFRESH_TOKEN}}"
   }
 }
 
@@ -37,16 +36,15 @@ tests {
     expect(res.status).to.equal(200);
   });
 
-  test("returns a bearer token and a refresh token", function () {
-    expect(res.body.tokenType).to.equal("Bearer");
+  test("rotates both tokens", function () {
     expect(res.body.accessToken).to.be.a("string");
     expect(res.body.refreshToken).to.be.a("string");
   });
 }
 
 docs {
-  Run "Register customer" then "Confirm email" first — login fails with 401 on an
-  inactive (unconfirmed) account.
-  Saves accessToken into ACCESS_TOKEN and refreshToken into REFRESH_TOKEN, used by
-  "Get authenticated customer", "Refresh access token" and "Logout customer" below.
+  Run "Login customer" first so REFRESH_TOKEN is set.
+  Consumes the current refresh token and issues a new access + refresh token pair
+  (rotation) — running this request twice in a row without re-running "Login customer"
+  in between still works, since each run saves the new REFRESH_TOKEN for the next one.
 }
