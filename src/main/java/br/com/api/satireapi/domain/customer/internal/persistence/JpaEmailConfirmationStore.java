@@ -19,18 +19,18 @@ class JpaEmailConfirmationStore implements EmailConfirmationStore {
 
     @Override
     public void save(UUID customerId, String tokenHash, Instant expiresAt) {
-        var confirmation = repository.findById(customerId)
-            .map(existing -> {
-                existing.rotate(tokenHash, expiresAt);
-                return existing;
-            })
-            .orElseGet(() -> EmailConfirmation.issue(customerId, tokenHash, expiresAt));
-        repository.save(confirmation);
+        repository.upsert(customerId, tokenHash, expiresAt);
     }
 
     @Override
     public Optional<UUID> findCustomerIdByHash(String tokenHash, Instant now) {
-        return repository.findByTokenHashAndExpiresAtAfter(tokenHash, now).map(EmailConfirmation::getCustomerId);
+        return repository.findByTokenHashAndExpiresAtAfter(tokenHash, now)
+            .map(EmailConfirmation::getCustomerId);
+    }
+
+    @Override
+    public boolean consume(UUID customerId, String tokenHash, Instant now) {
+        return repository.consume(customerId, tokenHash, now) == 1;
     }
 
     @Override

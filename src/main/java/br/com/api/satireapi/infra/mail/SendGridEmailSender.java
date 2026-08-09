@@ -1,19 +1,20 @@
 package br.com.api.satireapi.infra.mail;
 
+import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmationEmailSender;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
 
 @Component
-public class SendGridEmailSender {
+class SendGridEmailSender implements ConfirmationEmailSender {
 
-    private static final Logger log = LoggerFactory.getLogger(SendGridEmailSender.class);
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
+    private static final Duration READ_TIMEOUT = Duration.ofSeconds(10);
 
     private final RestClient restClient;
     private final String apiKey;
@@ -25,7 +26,13 @@ public class SendGridEmailSender {
     ) {
         this.apiKey = apiKey;
         this.fromEmail = fromEmail;
-        this.restClient = RestClient.builder().baseUrl("https://api.sendgrid.com/v3").build();
+        var requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(CONNECT_TIMEOUT);
+        requestFactory.setReadTimeout(READ_TIMEOUT);
+        this.restClient = RestClient.builder()
+            .baseUrl("https://api.sendgrid.com/v3")
+            .requestFactory(requestFactory)
+            .build();
     }
 
     // Nunca propaga falha de envio: um provedor de e-mail fora do ar não pode derrubar o registro,
@@ -47,17 +54,13 @@ public class SendGridEmailSender {
             )
         );
 
-        try {
-            restClient.post()
-                .uri("/mail/send")
-                .header("Authorization", "Bearer " + apiKey)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(body)
-                .retrieve()
-                .toBodilessEntity();
-        } catch (RestClientException ex) {
-            log.error("Failed to send confirmation email", ex);
-        }
+        restClient.post()
+            .uri("/mail/send")
+            .header("Authorization", "Bearer " + apiKey)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(body)
+            .retrieve()
+            .toBodilessEntity();
     }
 
     private static String plainTextBody(String confirmationLink) {

@@ -29,3 +29,10 @@ app:
     sendgrid-api-key: ${SENDGRID_API_KEY}
     from: ${MAIL_FROM:satire.noreply@gmail.com}
     confirmation-expiration: ${EMAIL_CONFIRMATION_EXPIRATION:86400}
+    outbox:
+      max-attempts: ${MAIL_OUTBOX_MAX_ATTEMPTS:5}
+      stale-after: ${MAIL_OUTBOX_STALE_AFTER:PT15M}
+      poll-interval: ${MAIL_OUTBOX_POLL_INTERVAL:PT1M}
+      retry-base: ${MAIL_OUTBOX_RETRY_BASE:PT30S}
+      bulkhead: ${MAIL_OUTBOX_BULKHEAD:4}
+      rate-limit-per-minute: ${MAIL_OUTBOX_RATE_LIMIT_PER_MINUTE:30}

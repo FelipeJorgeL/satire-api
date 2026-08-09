@@ -21,6 +21,9 @@ public class EmailConfirmation {
     @Column(name = "expira_em", nullable = false)
     private Instant expiresAt;
 
+    @Column(name = "consumido_em")
+    private Instant consumedAt;
+
     @Column(name = "criado_em", nullable = false)
     private Instant createdAt;
 
@@ -53,5 +56,9 @@ public class EmailConfirmation {
 
     public Instant getExpiresAt() {
         return expiresAt;
+    }
+
+    public Instant getConsumedAt() {
+        return consumedAt;
     }
 }
