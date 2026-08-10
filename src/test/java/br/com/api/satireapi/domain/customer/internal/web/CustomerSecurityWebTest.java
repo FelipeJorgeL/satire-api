@@ -12,12 +12,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import br.com.api.satireapi.domain.customer.CustomerGateway;
 import br.com.api.satireapi.domain.customer.dto.CustomerSummary;
 import br.com.api.satireapi.domain.customer.internal.dto.request.LoginRequest;
+import br.com.api.satireapi.domain.customer.internal.dto.request.RefreshTokenRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.request.RegisterCustomerRequest;
+import br.com.api.satireapi.domain.customer.internal.dto.request.ResendConfirmationRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.response.LoginResponse;
 import br.com.api.satireapi.domain.customer.internal.usecase.AuthenticateCustomerUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmEmailUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.CustomerEmailAlreadyExistsException;
 import br.com.api.satireapi.domain.customer.internal.usecase.InvalidCredentialsException;
+import br.com.api.satireapi.domain.customer.internal.usecase.InvalidEmailConfirmationTokenException;
+import br.com.api.satireapi.domain.customer.internal.usecase.InvalidRefreshTokenException;
+import br.com.api.satireapi.domain.customer.internal.usecase.LogoutUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.RefreshAccessTokenUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.RegisterCustomerUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.RegistrationRateLimiter;
+import br.com.api.satireapi.domain.customer.internal.usecase.ResendConfirmationEmailUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.TooManyLoginAttemptsException;
 import br.com.api.satireapi.infra.security.SecurityConfig;
 import br.com.api.satireapi.infra.security.jwt.JwtAuthenticationFilter;
@@ -58,6 +67,21 @@ class CustomerSecurityWebTest {
     private AuthenticateCustomerUseCase authenticateCustomerUseCase;
 
     @MockitoBean
+    private RefreshAccessTokenUseCase refreshAccessTokenUseCase;
+
+    @MockitoBean
+    private LogoutUseCase logoutUseCase;
+
+    @MockitoBean
+    private ConfirmEmailUseCase confirmEmailUseCase;
+
+    @MockitoBean
+    private RegistrationRateLimiter registrationRateLimiter;
+
+    @MockitoBean
+    private ResendConfirmationEmailUseCase resendConfirmationEmailUseCase;
+
+    @MockitoBean
     private CustomerGateway customerGateway;
 
     @Test
@@ -88,7 +112,8 @@ class CustomerSecurityWebTest {
 
     @Test
     void loginWithValidCredentialsReturnsToken() throws Exception {
-        when(authenticateCustomerUseCase.execute(any())).thenReturn(new LoginResponse("jwt-token", "Bearer", 3600));
+        when(authenticateCustomerUseCase.execute(any()))
+            .thenReturn(new LoginResponse("jwt-token", "Bearer", 3600, "refresh-token", 2_592_000));
 
         mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -104,6 +129,71 @@ class CustomerSecurityWebTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new LoginRequest("felipe@example.com", "wrong-password"))))
             .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void refreshWithValidTokenReturnsNewTokens() throws Exception {
+        when(refreshAccessTokenUseCase.execute(any()))
+            .thenReturn(new LoginResponse("new-access-token", "Bearer", 3600, "new-refresh-token", 2_592_000));
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new RefreshTokenRequest("valid-refresh-token"))))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void refreshWithInvalidTokenReturnsUnauthorized() throws Exception {
+        when(refreshAccessTokenUseCase.execute(any())).thenThrow(new InvalidRefreshTokenException());
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new RefreshTokenRequest("invalid-refresh-token"))))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void logoutWithoutTokenIsUnauthorized() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void logoutWithValidTokenReturnsNoContent() throws Exception {
+        var customerId = UUID.randomUUID();
+        var token = jwtTokenService.generate(customerId.toString(), "felipe@example.com", List.of("CLIENTE"));
+
+        mockMvc.perform(post("/api/v1/auth/logout").header("Authorization", "Bearer " + token))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void confirmationLinkGetDoesNotActivateAccount() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/confirm").param("token", "valid-confirmation-token"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void resendConfirmationReturnsGenericAcceptedResponse() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/confirm/resend")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new ResendConfirmationRequest("felipe@example.com"))))
+            .andExpect(status().isAccepted());
+    }
+
+    @Test
+    void confirmWithValidTokenReturnsOk() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/confirm").param("token", "valid-confirmation-token"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void confirmWithInvalidTokenReturnsBadRequest() throws Exception {
+        org.mockito.Mockito.doThrow(new InvalidEmailConfirmationTokenException())
+            .when(confirmEmailUseCase).execute("invalid-token");
+
+        mockMvc.perform(post("/api/v1/auth/confirm").param("token", "invalid-token"))
+            .andExpect(status().isBadRequest());
     }
 
     @Test
