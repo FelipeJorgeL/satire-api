@@ -7,6 +7,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "enderecos_pedidos")
@@ -22,7 +24,8 @@ public class OrderAddressSnapshot {
     @Column(name = "destinatario", nullable = false, length = 120)
     private String recipient;
 
-    @Column(name = "cep", nullable = false, length = 8)
+    @Column(name = "cep", nullable = false, length = 8, columnDefinition = "char(8)")
+    @JdbcTypeCode(SqlTypes.CHAR)
     private String postalCode;
 
     @Column(name = "rua", nullable = false, length = 180)
@@ -40,7 +43,8 @@ public class OrderAddressSnapshot {
     @Column(name = "cidade", nullable = false, length = 100)
     private String city;
 
-    @Column(name = "uf", nullable = false, length = 2)
+    @Column(name = "uf", nullable = false, length = 2, columnDefinition = "char(2)")
+    @JdbcTypeCode(SqlTypes.CHAR)
     private String state;
 
     protected OrderAddressSnapshot() {

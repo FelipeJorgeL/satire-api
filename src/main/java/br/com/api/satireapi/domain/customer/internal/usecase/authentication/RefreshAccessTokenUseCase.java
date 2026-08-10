@@ -65,7 +65,8 @@ public class RefreshAccessTokenUseCase {
             "Bearer",
             accessTokenIssuer.expirationSeconds(),
             rawRefreshToken,
-            refreshExpirationSeconds
+            refreshExpirationSeconds,
+            profiles
         );
     }
 }

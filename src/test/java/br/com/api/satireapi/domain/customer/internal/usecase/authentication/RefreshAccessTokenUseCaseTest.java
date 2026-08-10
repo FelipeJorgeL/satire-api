@@ -58,6 +58,7 @@ class RefreshAccessTokenUseCaseTest {
 
         assertEquals("new-access-token", response.accessToken());
         assertEquals(3600L, response.expiresIn());
+        assertEquals(List.of("CLIENTE"), response.profiles());
         verify(refreshTokenStore).rotateIfCurrent(
             eq(customerId), eq(tokenHash), any(Instant.class), any(), any()
         );
