@@ -126,6 +126,10 @@ public class Customer {
         changeStatus(true);
     }
 
+    public void activate() {
+        this.active = true;
+    }
+
     public UUID getId() {
         return id;
     }
