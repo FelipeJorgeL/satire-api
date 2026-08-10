@@ -28,14 +28,14 @@ Tabelas: `usuarios`, `perfis`, `usuarios_perfis`, `enderecos`, `refresh_tokens`,
 | `POST` | `/api/v1/auth/confirm?token={token}` | Público | Implementado | Consumir o token e confirmar o e-mail. |
 | `GET` | `/api/v1/auth/confirm?token={token}` | Público | Implementado | Exibir página HTML intermediária; não consome o token. |
 | `GET` | `/api/v1/me` | Bearer válido | Implementado | Consultar o próprio cliente. |
-| `PATCH` | `/api/v1/me` | Bearer válido | Planejado | Atualizar dados pessoais permitidos. |
-| `DELETE` | `/api/v1/me` | Bearer válido | Planejado | Desativar a própria conta. |
-| `GET` | `/api/v1/me/addresses` | Bearer válido | Planejado | Listar endereços do cliente. |
-| `POST` | `/api/v1/me/addresses` | Bearer válido | Planejado | Cadastrar endereço. |
-| `GET` | `/api/v1/me/addresses/{addressId}` | Bearer válido | Planejado | Consultar endereço próprio. |
-| `PATCH` | `/api/v1/me/addresses/{addressId}` | Bearer válido | Planejado | Atualizar endereço próprio. |
-| `DELETE` | `/api/v1/me/addresses/{addressId}` | Bearer válido | Planejado | Remover endereço próprio. |
-| `PATCH` | `/api/v1/me/addresses/{addressId}/primary` | Bearer válido | Planejado | Definir endereço principal. |
+| `PATCH` | `/api/v1/me` | Bearer válido | Implementado | Atualizar dados pessoais permitidos. |
+| `DELETE` | `/api/v1/me` | Bearer válido | Implementado | Desativar a própria conta. |
+| `GET` | `/api/v1/me/addresses` | Bearer válido | Implementado | Listar endereços do cliente. |
+| `POST` | `/api/v1/me/addresses` | Bearer válido | Implementado | Cadastrar endereço. |
+| `GET` | `/api/v1/me/addresses/{addressId}` | Bearer válido | Implementado | Consultar endereço próprio. |
+| `PATCH` | `/api/v1/me/addresses/{addressId}` | Bearer válido | Implementado | Atualizar endereço próprio. |
+| `DELETE` | `/api/v1/me/addresses/{addressId}` | Bearer válido | Implementado | Remover endereço próprio. |
+| `PATCH` | `/api/v1/me/addresses/{addressId}/primary` | Bearer válido | Implementado | Definir endereço principal. |
 
 Observação: `GET /api/v1/customers/{id}` está implementado, mas exige `ADMIN` e por isso aparece na seção do Painel, apesar de a URL não conter `/admin`.
 
@@ -83,11 +83,11 @@ Tabelas: `carrinhos`, `itens_carrinhos`, `usuarios`, `variacoes_produtos`.
 
 | Método | Endpoint | Autorização | Estado | Responsabilidade |
 |---|---|---|---|---|
-| `GET` | `/api/v1/me/cart` | Bearer válido | Planejado | Consultar o carrinho atual. |
-| `POST` | `/api/v1/me/cart/items` | Bearer válido | Planejado | Adicionar uma variação ao carrinho. |
-| `PATCH` | `/api/v1/me/cart/items/{itemId}` | Bearer válido | Planejado | Alterar quantidade de um item próprio. |
-| `DELETE` | `/api/v1/me/cart/items/{itemId}` | Bearer válido | Planejado | Remover item próprio. |
-| `DELETE` | `/api/v1/me/cart` | Bearer válido | Planejado | Esvaziar o carrinho próprio. |
+| `GET` | `/api/v1/me/cart` | Bearer válido | Implementado | Consultar o carrinho atual, com subtotal, disponibilidade e estoque atual. |
+| `POST` | `/api/v1/me/cart/items` | Bearer válido | Implementado | Adicionar uma variação ao carrinho, validando produto ativo e quantidade disponível. |
+| `PATCH` | `/api/v1/me/cart/items/{itemId}` | Bearer válido | Implementado | Alterar quantidade de um item próprio, validando disponibilidade. |
+| `DELETE` | `/api/v1/me/cart/items/{itemId}` | Bearer válido | Implementado | Remover item próprio. |
+| `DELETE` | `/api/v1/me/cart` | Bearer válido | Implementado | Esvaziar o carrinho próprio. |
 
 ### Estoque — consulta da loja — `inventory`
 
@@ -103,11 +103,13 @@ Tabelas: `pedidos`, `itens_pedidos`, `enderecos_pedidos`, `historicos_status_ped
 
 | Método | Endpoint | Autorização | Estado | Responsabilidade |
 |---|---|---|---|---|
-| `POST` | `/api/v1/orders` | Bearer válido | Planejado | Criar pedido a partir do carrinho. |
+| `POST` | `/api/v1/orders` | Bearer válido | Implementado | Criar pedido a partir do carrinho e do endereço próprio informado em `addressId`. Calcula frete, congela itens/endereço, baixa estoque, cria entrega e limpa o carrinho na mesma transação. |
 | `GET` | `/api/v1/orders` | Bearer válido | Planejado | Listar pedidos do próprio cliente. |
 | `GET` | `/api/v1/orders/{orderId}` | Bearer válido | Planejado | Consultar pedido próprio em detalhe. |
 | `POST` | `/api/v1/orders/{orderId}/cancel` | Bearer válido | Planejado | Cancelar pedido quando permitido. |
 | `GET` | `/api/v1/orders/{orderId}/status-history` | Bearer válido | Planejado | Consultar histórico de status do pedido próprio. |
+
+O checkout inicia o pedido em `AGUARDANDO_PAGAMENTO`. O frete usa o adaptador determinístico `STANDARD-SIMULATED`, atrás do contrato `ShippingQuoteGateway`, até que uma API de cotação seja integrada. Não há cobrança, gateway financeiro ou webhook de pagamento nesta etapa.
 
 ### Pagamento — `payment`
 
@@ -155,17 +157,17 @@ Tabelas: `categorias`, `produtos`, `variacoes_produtos`, `imagens_produtos`.
 
 | Método | Endpoint | Estado | Responsabilidade |
 |---|---|---|---|
-| `GET` | `/api/v1/admin/products` | Planejado | Listar produtos ativos e inativos. |
-| `POST` | `/api/v1/admin/products` | Planejado | Criar produto, variações e imagens em operação transacional. |
-| `PUT` | `/api/v1/admin/products/{productId}` | Planejado | Substituir dados, variações e imagens do produto. |
-| `PATCH` | `/api/v1/admin/products/{productId}/status` | Planejado | Ativar ou desativar produto. |
-| `DELETE` | `/api/v1/admin/products/{productId}` | Planejado | Desativar produto. |
-| `DELETE` | `/api/v1/admin/products/{productId}/images/{imageId}` | Planejado | Remover uma imagem específica. |
-| `POST` | `/api/v1/admin/categories` | Planejado | Criar categoria. |
-| `PATCH` | `/api/v1/admin/categories/{categoryId}` | Planejado | Atualizar categoria. |
-| `DELETE` | `/api/v1/admin/categories/{categoryId}` | Planejado | Desativar categoria. |
+| `GET` | `/api/v1/admin/products` | Implementado | Listar produtos ativos e inativos. |
+| `POST` | `/api/v1/admin/products` | Implementado | Criar produto, variações e imagens em operação transacional. |
+| `PUT` | `/api/v1/admin/products/{productId}` | Implementado | Substituir dados, variações e imagens do produto. |
+| `PATCH` | `/api/v1/admin/products/{productId}/status` | Implementado | Ativar ou desativar produto. |
+| `DELETE` | `/api/v1/admin/products/{productId}` | Implementado | Desativar produto. |
+| `DELETE` | `/api/v1/admin/products/{productId}/images/{imageId}` | Implementado | Remover uma imagem específica. |
+| `POST` | `/api/v1/admin/categories` | Implementado | Criar categoria. |
+| `PATCH` | `/api/v1/admin/categories/{categoryId}` | Implementado | Atualizar categoria. |
+| `DELETE` | `/api/v1/admin/categories/{categoryId}` | Implementado | Desativar categoria. |
 
-Contrato de produto: `POST` e `PUT` devem usar `multipart/form-data`, com uma parte JSON `product` e arquivos de imagem. A metadata de cada imagem deve identificar, sem ambiguidade, `altText`, `decorative`, `principal` e `displayOrder`; não é aceitável depender de um `alt` inventado pelo frontend depois do upload.
+Contrato de produto: `POST` e `PUT` usam `application/json`. O frontend ou uma integração futura envia a URL HTTPS da imagem; a API não recebe `MultipartFile` nem armazena arquivos. A metadata de cada imagem identifica, sem ambiguidade, `altText`, `decorative`, `principal` e `displayOrder`.
 
 ### Estoque — `inventory`
 
@@ -173,9 +175,9 @@ Tabelas: `movimentacoes_estoque`, `variacoes_produtos`, `pedidos`, `usuarios`.
 
 | Método | Endpoint | Estado | Responsabilidade |
 |---|---|---|---|
-| `POST` | `/api/v1/admin/inventory/movements` | Planejado | Registrar entrada ou saída manual (`ENTRADA`/`SAIDA`). |
-| `GET` | `/api/v1/admin/inventory/movements` | Planejado | Consultar movimentações de estoque. |
-| `GET` | `/api/v1/admin/inventory/variations/{variationId}` | Planejado | Consultar saldo e histórico da variação. |
+| `POST` | `/api/v1/admin/inventory/movements` | Implementado | Registrar entrada ou saída manual (`ENTRADA`/`SAIDA`). |
+| `GET` | `/api/v1/admin/inventory/movements` | Implementado | Consultar movimentações de estoque. |
+| `GET` | `/api/v1/admin/inventory/variations/{variationId}` | Implementado | Consultar saldo e histórico resumido da variação. |
 
 `VENDA` e `CANCELAMENTO` não têm endpoint administrativo próprio. São efeitos internos do serviço de pedidos e devem ser gravados em `movimentacoes_estoque` na mesma transação da operação de pedido.
 
@@ -185,9 +187,11 @@ Tabelas: `pedidos`, `itens_pedidos`, `enderecos_pedidos`, `historicos_status_ped
 
 | Método | Endpoint | Estado | Responsabilidade |
 |---|---|---|---|
-| `GET` | `/api/v1/admin/orders` | Planejado | Listar pedidos de qualquer cliente, com filtros por status e cliente. |
-| `GET` | `/api/v1/admin/orders/{orderId}` | Planejado | Consultar pedido completo, incluindo itens, pagamento e entrega. |
-| `PATCH` | `/api/v1/admin/orders/{orderId}/status` | Planejado | Avançar status conforme a máquina de estados. |
+| `GET` | `/api/v1/admin/orders` | Implementado | Listar pedidos de qualquer cliente, com filtros por status, cliente e período. |
+| `GET` | `/api/v1/admin/orders/{orderId}` | Implementado | Consultar pedido, itens, endereço congelado e histórico de status. |
+| `PATCH` | `/api/v1/admin/orders/{orderId}/status` | Implementado | Avançar ou cancelar conforme a máquina de estados, registrando motivo e administrador. |
+
+Regra de cancelamento: `CANCELADO` exige motivo e pode ser registrado administrativamente, mas nesta fase não executa estorno, devolução de estoque ou atualização logística. Esses efeitos dependem das integrações de `payment`, `inventory` e `shipping`.
 
 ### Pagamento — `payment`
 
@@ -195,7 +199,9 @@ Tabela: `pagamentos`.
 
 | Método | Endpoint | Estado | Responsabilidade |
 |---|---|---|---|
-| `POST` | `/api/v1/admin/payments/{paymentId}/refund` | Planejado | Solicitar estorno autorizado. |
+| `POST` | `/api/v1/admin/payments/{paymentId}/refund` | Implementado | Solicitar estorno autorizado com `Idempotency-Key`. |
+
+Contrato de estorno: o administrador envia o motivo e uma chave `Idempotency-Key`; a API registra a solicitação como `SOLICITADO` e retorna `202 Accepted`. A API não marca o pagamento como `ESTORNADO` antes da confirmação do gateway. A tabela `estornos` mantém a auditoria, impede mais de uma solicitação por pagamento e garante replay idempotente.
 
 ### Entrega — `shipping`
 
@@ -203,8 +209,10 @@ Tabela: `entregas`.
 
 | Método | Endpoint | Estado | Responsabilidade |
 |---|---|---|---|
-| `POST` | `/api/v1/admin/orders/{orderId}/shipping` | Planejado | Registrar envio e dados de rastreio. |
-| `PATCH` | `/api/v1/admin/shipments/{shipmentId}/status` | Planejado | Atualizar status logístico. |
+| `POST` | `/api/v1/admin/orders/{orderId}/shipping` | Implementado | Completar transportadora, rastreio e previsão da entrega criada com o pedido. |
+| `PATCH` | `/api/v1/admin/shipments/{shipmentId}/status` | Implementado | Atualizar status logístico conforme a máquina de estados. |
+
+Contrato da entrega: cada pedido possui no máximo uma entrega, criada pelo checkout na Fase 7B com status `AGUARDANDO_ENVIO`. Nesta Fase 7A, o painel apenas completa seus dados e altera o status. As transições permitidas são `AGUARDANDO_ENVIO -> ENVIADO`, `ENVIADO -> EM_TRANSITO/DEVOLVIDO` e `EM_TRANSITO -> ENTREGUE/DEVOLVIDO`; `ENTREGUE` e `DEVOLVIDO` são terminais. Marcar `DEVOLVIDO` não executa estorno, devolução de estoque ou notificação.
 
 ## Regras transversais
 
@@ -219,7 +227,7 @@ Tabela: `entregas`.
 
 ## Estado atual da implementação
 
-No código atual, o módulo `customer` é o único com controllers funcionais. As rotas abaixo estão implementadas:
+No código atual, as rotas marcadas como `Implementado` nas tabelas possuem controllers e casos de uso funcionais. A implementação recente também cobre:
 
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/confirm/resend`
@@ -230,5 +238,13 @@ No código atual, o módulo `customer` é o único com controllers funcionais. A
 - `GET /api/v1/auth/confirm`
 - `GET /api/v1/me`
 - `GET /api/v1/customers/{id}`
+- `GET /api/v1/me/cart`
+- `POST /api/v1/me/cart/items`
+- `PATCH /api/v1/me/cart/items/{itemId}`
+- `DELETE /api/v1/me/cart/items/{itemId}`
+- `DELETE /api/v1/me/cart`
+- `POST /api/v1/orders`
+- `POST /api/v1/admin/orders/{orderId}/shipping`
+- `PATCH /api/v1/admin/shipments/{shipmentId}/status`
 
-As demais rotas deste documento são o contrato planejado para os módulos `catalog`, `inventory`, `cart`, `order`, `payment` e `shipping`, além das operações ainda faltantes de `customer`.
+As demais rotas continuam planejadas conforme o estado indicado em cada tabela. O checkout não inclui cobrança real: pagamento, confirmação financeira, webhooks e integrações externas permanecem nas etapas futuras.
