@@ -4,10 +4,8 @@ import br.com.api.satireapi.domain.customer.internal.dto.request.ResendConfirmat
 import br.com.api.satireapi.domain.customer.internal.model.Customer;
 import java.time.Instant;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
 public class ResendConfirmationEmailUseCase {
 
     private final CustomerFinder customerFinder;

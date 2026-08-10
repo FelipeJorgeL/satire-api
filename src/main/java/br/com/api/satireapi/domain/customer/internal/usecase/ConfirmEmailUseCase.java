@@ -1,10 +1,8 @@
 package br.com.api.satireapi.domain.customer.internal.usecase;
 
 import java.time.Instant;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
 public class ConfirmEmailUseCase {
 
     private final EmailConfirmationStore emailConfirmationStore;

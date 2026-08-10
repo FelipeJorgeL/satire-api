@@ -26,6 +26,9 @@ public class ProductImage {
     @Column(name = "texto_alternativo", length = 255)
     private String altText;
 
+    @Column(name = "decorativa", nullable = false)
+    private boolean decorative;
+
     @Column(name = "principal", nullable = false)
     private boolean primary;
 
@@ -42,12 +45,14 @@ public class ProductImage {
         UUID productId,
         String url,
         String altText,
+        boolean decorative,
         boolean primary,
         int displayOrder
     ) {
         this.productId = productId;
         this.url = url.trim();
-        this.altText = blankToNull(altText);
+        this.altText = decorative ? "" : blankToNull(altText);
+        this.decorative = decorative;
         this.primary = primary;
         this.displayOrder = displayOrder;
         this.createdAt = OffsetDateTime.now();
@@ -57,10 +62,11 @@ public class ProductImage {
         UUID productId,
         String url,
         String altText,
+        boolean decorative,
         boolean primary,
         int displayOrder
     ) {
-        return new ProductImage(productId, url, altText, primary, displayOrder);
+        return new ProductImage(productId, url, altText, decorative, primary, displayOrder);
     }
 
     public UUID getId() {
@@ -84,7 +90,7 @@ public class ProductImage {
     }
 
     public boolean isDecorative() {
-        return altText == null;
+        return decorative;
     }
 
     public int getDisplayOrder() {

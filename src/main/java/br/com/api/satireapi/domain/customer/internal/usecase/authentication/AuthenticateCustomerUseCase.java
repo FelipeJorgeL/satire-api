@@ -48,9 +48,9 @@ public class AuthenticateCustomerUseCase {
     }
 
     @Transactional
-    public LoginResponse execute(LoginRequest request) {
+    public LoginResponse execute(LoginRequest request, String origin) {
         var normalizedEmail = Customer.normalizeEmail(request.email());
-        if (loginAttemptTracker.isBlocked(normalizedEmail)) {
+        if (loginAttemptTracker.isBlocked(normalizedEmail, origin)) {
             throw new TooManyLoginAttemptsException();
         }
 
@@ -59,12 +59,12 @@ public class AuthenticateCustomerUseCase {
         var passwordMatches = passwordEncoder.matches(request.password(), passwordHash);
 
         if (customer.isEmpty() || !passwordMatches) {
-            loginAttemptTracker.recordFailure(normalizedEmail);
+            loginAttemptTracker.recordFailure(normalizedEmail, origin);
             throw new InvalidCredentialsException();
         }
 
         var authenticated = customer.get();
-        loginAttemptTracker.recordSuccess(normalizedEmail);
+        loginAttemptTracker.recordSuccess(normalizedEmail, origin);
 
         var profiles = authenticated.getProfiles().stream().map(Profile::getName).toList();
         var accessToken = accessTokenIssuer.generate(

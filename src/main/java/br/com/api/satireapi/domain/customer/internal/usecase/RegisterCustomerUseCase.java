@@ -2,7 +2,6 @@ package br.com.api.satireapi.domain.customer.internal.usecase;
 
 import java.time.Instant;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.api.satireapi.domain.customer.internal.dto.request.RegisterCustomerRequest;
@@ -10,7 +9,6 @@ import br.com.api.satireapi.domain.customer.internal.dto.response.CustomerRespon
 import br.com.api.satireapi.domain.customer.internal.mapper.CustomerMapper;
 import br.com.api.satireapi.domain.customer.internal.model.Customer;
 
-@Service
 public class RegisterCustomerUseCase {
 
     private static final String CUSTOMER_PROFILE = "CLIENTE";

@@ -32,7 +32,7 @@ class ProductAggregateWriter {
             .toList());
         imageRepository.saveAll(request.images().stream()
             .map(image -> ProductImage.create(
-                product.getId(), image.url(), image.decorative() ? null : image.altText(),
+                product.getId(), image.url(), image.altText(), image.decorative(),
                 image.primary(), image.displayOrder()
             ))
             .toList());
