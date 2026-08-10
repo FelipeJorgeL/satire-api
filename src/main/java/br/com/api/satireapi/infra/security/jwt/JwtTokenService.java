@@ -5,7 +5,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import br.com.api.satireapi.domain.customer.internal.usecase.AccessTokenIssuer;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;

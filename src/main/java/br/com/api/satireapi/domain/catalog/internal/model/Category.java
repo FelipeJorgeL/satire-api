@@ -104,6 +104,8 @@ public class Category {
 
     private void touch() {
         this.updatedAt = OffsetDateTime.now();
+    }
+
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
     }
@@ -122,13 +124,5 @@ public class Category {
 
     public void setDeletedAt(OffsetDateTime deletedAt) {
         this.deletedAt = deletedAt;
-    }
-
-    public List<Product> getProducts() {
-        return products;
-    }
-
-    public void setProducts(List<Product> products) {
-        this.products = products;
     }
 }

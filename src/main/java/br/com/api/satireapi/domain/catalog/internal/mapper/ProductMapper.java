@@ -6,15 +6,18 @@ import br.com.api.satireapi.domain.catalog.internal.model.*;
 
 public final class ProductMapper {
 
-    private ProductMapper() {
+    private final CategoryMapper categoryMapper;
+
+    public ProductMapper(CategoryMapper categoryMapper) {
+        this.categoryMapper = categoryMapper;
     }
 
     public ProductImageSummary productImageToSummary(ProductImage image) {
         return new ProductImageSummary(
                 image.getId(),
                 image.getUrl(),
-                image.getAlternativeText(),
-                image.isMainImage(),
+                image.getAltText(),
+                image.isPrimary(),
                 image.getDisplayOrder()
         );
     }
@@ -25,7 +28,7 @@ public final class ProductMapper {
                 variation.getName(),
                 variation.getSku(),
                 variation.getPrice(),
-                variation.getInventory(),
+                variation.getStock(),
                 variation.isActive()
         );
     }
@@ -45,7 +48,7 @@ public final class ProductMapper {
                 product.getSlug(),
                 product.getDescription(),
                 product.isActive(),
-                this.categoryToSummary(product.getCategory()),
+                categoryMapper.toSummary(product.getCategory()),
                 images,
                 variations
         );
@@ -71,7 +74,7 @@ public final class ProductMapper {
                 product.getSlug(),
                 product.getDescription(),
                 product.isActive(),
-                this.categoryToSummary(product.getCategory()),
+                categoryMapper.toSummary(product.getCategory()),
                 product.getProductImages()
                         .stream()
                         .map(this::productImageToSummary)
