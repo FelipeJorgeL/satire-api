@@ -72,6 +72,7 @@ class AuthenticateCustomerUseCaseTest {
         assertEquals(3600L, response.expiresIn());
         assertEquals(43, response.refreshToken().length());
         assertEquals(2592000L, response.refreshExpiresIn());
+        assertEquals(List.of("CLIENTE"), response.profiles());
         verify(loginAttemptTracker).recordSuccess("felipe@example.com");
         verify(refreshTokenStore).save(eq(customerId), any(), any());
     }

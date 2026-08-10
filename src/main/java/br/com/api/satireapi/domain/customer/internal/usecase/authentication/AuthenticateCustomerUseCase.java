@@ -81,7 +81,8 @@ public class AuthenticateCustomerUseCase {
             "Bearer",
             accessTokenIssuer.expirationSeconds(),
             rawRefreshToken,
-            refreshExpirationSeconds
+            refreshExpirationSeconds,
+            profiles
         );
     }
 }

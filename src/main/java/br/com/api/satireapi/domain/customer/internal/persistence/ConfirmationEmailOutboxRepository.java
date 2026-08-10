@@ -9,10 +9,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface ConfirmationEmailOutboxRepository extends JpaRepository<ConfirmationEmailOutbox, UUID> {
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
     @Query("""
         update ConfirmationEmailOutbox outbox
            set outbox.status = :sending,
@@ -50,6 +52,7 @@ public interface ConfirmationEmailOutboxRepository extends JpaRepository<Confirm
     );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
     @Query("""
         update ConfirmationEmailOutbox outbox
            set outbox.status = :pending,
@@ -66,6 +69,7 @@ public interface ConfirmationEmailOutboxRepository extends JpaRepository<Confirm
     );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
     @Query("""
         update ConfirmationEmailOutbox outbox
            set outbox.status = :sent,
@@ -82,6 +86,7 @@ public interface ConfirmationEmailOutboxRepository extends JpaRepository<Confirm
     );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
     @Query("""
         update ConfirmationEmailOutbox outbox
            set outbox.status = :failed,
