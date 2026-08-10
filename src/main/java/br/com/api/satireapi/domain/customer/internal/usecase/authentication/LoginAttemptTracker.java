@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 public class LoginAttemptTracker {
 
     private static final int MAX_FAILED_ATTEMPTS = 5;
+    private static final int MAX_TRACKED_EMAILS = 10_000;
     private static final Duration LOCKOUT_WINDOW = Duration.ofMinutes(15);
 
     private final Clock clock;
@@ -24,21 +25,26 @@ public class LoginAttemptTracker {
         this.clock = clock;
     }
 
-    public boolean isBlocked(String email) {
+    public synchronized boolean isBlocked(String email) {
+        var now = Instant.now(clock);
+        removeExpired(now);
         var window = failuresByEmail.get(email);
         if (window == null) {
             return false;
         }
-        if (window.expiredAt(Instant.now(clock))) {
-            failuresByEmail.remove(email, window);
+        if (window.expiredAt(now)) {
             return false;
         }
         return window.count() >= MAX_FAILED_ATTEMPTS;
     }
 
-    public void recordFailure(String email) {
+    public synchronized void recordFailure(String email) {
+        var now = Instant.now(clock);
+        removeExpired(now);
+        if (!failuresByEmail.containsKey(email) && failuresByEmail.size() >= MAX_TRACKED_EMAILS) {
+            return;
+        }
         failuresByEmail.compute(email, (key, current) -> {
-            var now = Instant.now(clock);
             if (current == null || current.expiredAt(now)) {
                 return new FailureWindow(1, now);
             }
@@ -46,8 +52,12 @@ public class LoginAttemptTracker {
         });
     }
 
-    public void recordSuccess(String email) {
+    public synchronized void recordSuccess(String email) {
         failuresByEmail.remove(email);
+    }
+
+    private void removeExpired(Instant now) {
+        failuresByEmail.entrySet().removeIf(entry -> entry.getValue().expiredAt(now));
     }
 
     private record FailureWindow(int count, Instant start) {

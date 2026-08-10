@@ -1,0 +1,25 @@
+meta {
+  name: Confirm email
+  type: http
+  seq: 4
+  tags: [
+    customer
+    manual
+  ]
+}
+
+post {
+  url: {{BASE_URL}}/api/v1/auth/confirm?token={{CONFIRMATION_TOKEN}}
+  body: none
+  auth: none
+}
+
+params:query {
+  token: {{CONFIRMATION_TOKEN}}
+}
+
+docs {
+  Copy the token from the SendGrid confirmation link into CONFIRMATION_TOKEN and run
+  this request. The token is single-use and expires after the configured period.
+  GET only displays the confirmation page; this POST consumes the token and activates the account.
+}

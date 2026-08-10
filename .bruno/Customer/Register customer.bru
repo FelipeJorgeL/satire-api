@@ -38,6 +38,7 @@ docs {
   Creates a customer, normalizes the email, hashes the password and assigns the CLIENTE profile.
   The response is always a body-less 202 — identical whether the email is new or already
   registered — so the endpoint cannot be used to probe which emails have accounts.
-  Confirm the outcome by logging in. CUSTOMER_ID is captured later by
+  The account starts inactive and receives a confirmation e-mail through the outbox.
+  Run "Confirm email" before "Login customer". CUSTOMER_ID is captured later by
   "Get authenticated customer".
 }

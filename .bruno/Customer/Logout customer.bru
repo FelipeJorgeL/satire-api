@@ -1,0 +1,30 @@
+meta {
+  name: Logout customer
+  type: http
+  seq: 7
+  tags: [
+    customer
+    smoke
+  ]
+}
+
+post {
+  url: {{BASE_URL}}/api/v1/auth/logout
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+}
+
+tests {
+  test("returns 204 No Content", function () {
+    expect(res.status).to.equal(204);
+  });
+}
+
+docs {
+  Revokes the refresh session for the authenticated customer. The current access token
+  remains valid until its normal expiration; the refresh session cannot be renewed.
+}

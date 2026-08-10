@@ -1,7 +1,7 @@
 meta {
-  name: Login customer
+  name: Refresh access token
   type: http
-  seq: 3
+  seq: 6
   tags: [
     customer
     smoke
@@ -9,7 +9,7 @@ meta {
 }
 
 post {
-  url: {{BASE_URL}}/api/v1/auth/login
+  url: {{BASE_URL}}/api/v1/auth/refresh
   body: json
   auth: none
 }
@@ -20,8 +20,7 @@ headers {
 
 body:json {
   {
-    "email": "{{CUSTOMER_EMAIL}}",
-    "password": "{{CUSTOMER_PASSWORD}}"
+    "refreshToken": "{{REFRESH_TOKEN}}"
   }
 }
 
@@ -37,15 +36,8 @@ tests {
     expect(res.status).to.equal(200);
   });
 
-  test("returns bearer and refresh tokens", function () {
-    expect(res.body.tokenType).to.equal("Bearer");
+  test("rotates both tokens", function () {
     expect(res.body.accessToken).to.be.a("string");
     expect(res.body.refreshToken).to.be.a("string");
   });
-}
-
-docs {
-  Run "Register customer" and "Confirm email" first. Unconfirmed accounts receive 401.
-  Saves the access token into ACCESS_TOKEN and the refresh token into REFRESH_TOKEN for
-  "Get authenticated customer", "Refresh access token" and "Logout customer" below.
 }
