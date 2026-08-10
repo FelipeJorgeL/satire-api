@@ -169,6 +169,44 @@ class CustomerAccountSecurityWebTest {
             .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void customerCanUpdateAddress() throws Exception {
+        var customerId = UUID.randomUUID();
+        var addressId = UUID.randomUUID();
+        when(updateCustomerAddressUseCase.execute(any(), any(), any())).thenReturn(addressResponse());
+
+        mockMvc.perform(patch("/api/v1/me/addresses/" + addressId)
+                .header("Authorization", bearer(customerId, "CLIENTE"))
+                .contentType("application/json")
+                .content("{\"label\":\"Trabalho\",\"number\":\"2\"}"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void emptyAddressUpdateIsRejected() throws Exception {
+        var customerId = UUID.randomUUID();
+
+        mockMvc.perform(patch("/api/v1/me/addresses/" + UUID.randomUUID())
+                .header("Authorization", bearer(customerId, "CLIENTE"))
+                .contentType("application/json")
+                .content("{}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void customerCanDeleteAddressAndSetPrimaryAddress() throws Exception {
+        var customerId = UUID.randomUUID();
+        var addressId = UUID.randomUUID();
+
+        mockMvc.perform(delete("/api/v1/me/addresses/" + addressId)
+                .header("Authorization", bearer(customerId, "CLIENTE")))
+            .andExpect(status().isNoContent());
+
+        mockMvc.perform(patch("/api/v1/me/addresses/" + addressId + "/primary")
+                .header("Authorization", bearer(customerId, "CLIENTE")))
+            .andExpect(status().isNoContent());
+    }
+
     private String bearer(UUID customerId, String profile) {
         when(customerAuthenticationGateway.findById(customerId))
             .thenReturn(Optional.of(new CustomerAuthentication(customerId, true, Set.of(profile))));

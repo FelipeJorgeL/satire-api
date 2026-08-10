@@ -2,7 +2,9 @@ package br.com.api.satireapi.domain.cart.internal.web;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -96,6 +98,43 @@ class CustomerCartSecurityWebTest {
                 .content("{\"variationId\":\"" + UUID.randomUUID()
                     + "\",\"quantity\":0}"))
             .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void customerCanUpdateAndRemoveCartItem() throws Exception {
+        var customerId = UUID.randomUUID();
+        var itemId = UUID.randomUUID();
+        when(updateCartItemUseCase.execute(any(), any(), any())).thenReturn(CartResponse.empty(customerId));
+
+        mockMvc.perform(patch("/api/v1/me/cart/items/" + itemId)
+                .header("Authorization", bearer(customerId, "CLIENTE"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"quantity\":3}"))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(delete("/api/v1/me/cart/items/" + itemId)
+                .header("Authorization", bearer(customerId, "CLIENTE")))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void invalidCartItemQuantityIsRejected() throws Exception {
+        var customerId = UUID.randomUUID();
+
+        mockMvc.perform(patch("/api/v1/me/cart/items/" + UUID.randomUUID())
+                .header("Authorization", bearer(customerId, "CLIENTE"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"quantity\":0}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void customerCanClearCart() throws Exception {
+        var customerId = UUID.randomUUID();
+
+        mockMvc.perform(delete("/api/v1/me/cart")
+                .header("Authorization", bearer(customerId, "CLIENTE")))
+            .andExpect(status().isNoContent());
     }
 
     private String bearer(UUID customerId, String profile) {

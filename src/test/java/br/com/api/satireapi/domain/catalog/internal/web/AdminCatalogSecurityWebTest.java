@@ -4,7 +4,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import br.com.api.satireapi.domain.customer.CustomerAuthentication;
@@ -140,6 +142,55 @@ class AdminCatalogSecurityWebTest {
     }
 
     @Test
+    void adminCanReplaceProduct() throws Exception {
+        var adminId = UUID.randomUUID();
+        when(replaceProductUseCase.execute(any(), any())).thenReturn(productResponse());
+
+        mockMvc.perform(put("/api/v1/admin/products/" + UUID.randomUUID())
+                .header("Authorization", bearer(adminId, "ADMIN"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(productJson()))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void invalidProductStatusPayloadIsRejected() throws Exception {
+        var adminId = UUID.randomUUID();
+
+        mockMvc.perform(patch("/api/v1/admin/products/" + UUID.randomUUID() + "/status")
+                .header("Authorization", bearer(adminId, "ADMIN"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void adminCanChangeProductStatusAndDeleteImage() throws Exception {
+        var adminId = UUID.randomUUID();
+        var productId = UUID.randomUUID();
+        var imageId = UUID.randomUUID();
+
+        mockMvc.perform(patch("/api/v1/admin/products/" + productId + "/status")
+                .header("Authorization", bearer(adminId, "ADMIN"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"active\":false}"))
+            .andExpect(status().isNoContent());
+
+        mockMvc.perform(delete("/api/v1/admin/products/" + productId + "/images/" + imageId)
+                .header("Authorization", bearer(adminId, "ADMIN")))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void adminCanDeactivateProduct() throws Exception {
+        var adminId = UUID.randomUUID();
+
+        mockMvc.perform(delete("/api/v1/admin/products/" + UUID.randomUUID())
+                .header("Authorization", bearer(adminId, "ADMIN")))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
     void adminCanCreateAndDeactivateCategory() throws Exception {
         var adminId = UUID.randomUUID();
         when(createCategoryUseCase.execute(any()))
@@ -154,6 +205,30 @@ class AdminCatalogSecurityWebTest {
         mockMvc.perform(delete("/api/v1/admin/categories/" + UUID.randomUUID())
                 .header("Authorization", bearer(adminId, "ADMIN")))
             .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void adminCanUpdateCategory() throws Exception {
+        var adminId = UUID.randomUUID();
+        when(updateCategoryUseCase.execute(any(), any()))
+            .thenReturn(new AdminCategoryResponse(UUID.randomUUID(), "Tenis", "tenis", true));
+
+        mockMvc.perform(patch("/api/v1/admin/categories/" + UUID.randomUUID())
+                .header("Authorization", bearer(adminId, "ADMIN"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Tenis\"}"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void emptyCategoryUpdateIsRejected() throws Exception {
+        var adminId = UUID.randomUUID();
+
+        mockMvc.perform(patch("/api/v1/admin/categories/" + UUID.randomUUID())
+                .header("Authorization", bearer(adminId, "ADMIN"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+            .andExpect(status().isBadRequest());
     }
 
     private String bearer(UUID customerId, String profile) {

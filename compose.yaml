@@ -22,9 +22,9 @@ services:
     build:
       context: .
     environment:
-      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-satire}
-      DB_USERNAME: ${POSTGRES_USER:-satire}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-satire_local}
+      DB_URL: ${DB_URL:?DB_URL must be set in .env}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME must be set in .env}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-3600}
     ports:
