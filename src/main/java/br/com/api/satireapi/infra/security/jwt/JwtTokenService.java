@@ -1,5 +1,6 @@
 package br.com.api.satireapi.infra.security.jwt;
 
+import br.com.api.satireapi.domain.customer.AccessTokenIssuer;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;

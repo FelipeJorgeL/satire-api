@@ -1,7 +1,7 @@
 meta {
   name: Confirm email
   type: http
-  seq: 3
+  seq: 4
   tags: [
     customer
     manual
@@ -19,20 +19,7 @@ params:query {
 }
 
 docs {
-  No automated assertion here on purpose - this depends on a token you can only get
-  from the real email SendGrid sends to CUSTOMER_EMAIL.
-
-  Manual setup:
-
-  1. Run "Register customer" first.
-  2. Open the CUSTOMER_EMAIL inbox, find the confirmation email, and copy the token
-     from the link's "?token=" query param.
-  3. Paste it into the CONFIRMATION_TOKEN environment variable.
-  4. Run this POST request; a 200 response means the account was activated.
-
-  GET only shows a confirmation page and never activates the account. This prevents
-  link scanners and browser prefetchers from consuming the one-time token.
-
-  Without this step, "Login customer" returns 401: accounts start inactive
-  (ativo = false) until confirmed. The token is single-use and expires after 24h.
+  Copy the token from the SendGrid confirmation link into CONFIRMATION_TOKEN and run
+  this request. The token is single-use and expires after the configured period.
+  GET only displays the confirmation page; this POST consumes the token and activates the account.
 }

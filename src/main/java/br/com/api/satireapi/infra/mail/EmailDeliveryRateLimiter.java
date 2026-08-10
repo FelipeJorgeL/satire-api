@@ -11,12 +11,13 @@ import org.springframework.stereotype.Component;
 class EmailDeliveryRateLimiter {
 
     private final int maxPerWindow;
-    private final Duration window;
+    private final Duration window = Duration.ofMinutes(1);
     private final Deque<Instant> sentAt = new ArrayDeque<>();
 
-    EmailDeliveryRateLimiter(@Value("${app.mail.outbox.rate-limit-per-minute:30}") int maxPerMinute) {
-        this.maxPerWindow = maxPerMinute;
-        this.window = Duration.ofMinutes(1);
+    EmailDeliveryRateLimiter(
+        @Value("${app.mail.outbox.rate-limit-per-minute:30}") int maxPerMinute
+    ) {
+        this.maxPerWindow = Math.max(1, maxPerMinute);
     }
 
     synchronized boolean tryAcquire(Instant now) {

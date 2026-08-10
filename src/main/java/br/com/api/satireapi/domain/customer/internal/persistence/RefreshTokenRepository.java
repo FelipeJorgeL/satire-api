@@ -1,18 +1,26 @@
 package br.com.api.satireapi.domain.customer.internal.persistence;
 
+import br.com.api.satireapi.domain.customer.internal.model.RefreshToken;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import br.com.api.satireapi.domain.customer.internal.model.RefreshToken;
 
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID> {
 
-    Optional<RefreshToken> findByTokenHashAndExpiresAtAfter(String tokenHash, Instant now);
+    @Query("""
+        select token
+          from RefreshToken token
+         where token.tokenHash = :tokenHash
+           and token.expiresAt > :now
+        """)
+    Optional<RefreshToken> findByTokenHashAndExpiresAtAfter(
+        @Param("tokenHash") String tokenHash,
+        @Param("now") Instant now
+    );
 
     @Modifying
     @Query(value = """

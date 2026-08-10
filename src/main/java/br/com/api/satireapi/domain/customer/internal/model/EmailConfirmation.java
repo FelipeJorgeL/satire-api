@@ -30,35 +30,7 @@ public class EmailConfirmation {
     protected EmailConfirmation() {
     }
 
-    private EmailConfirmation(UUID customerId, String tokenHash, Instant expiresAt) {
-        this.customerId = customerId;
-        this.tokenHash = tokenHash;
-        this.expiresAt = expiresAt;
-        this.createdAt = Instant.now();
-    }
-
-    public static EmailConfirmation issue(UUID customerId, String tokenHash, Instant expiresAt) {
-        return new EmailConfirmation(customerId, tokenHash, expiresAt);
-    }
-
-    public void rotate(String tokenHash, Instant expiresAt) {
-        this.tokenHash = tokenHash;
-        this.expiresAt = expiresAt;
-    }
-
     public UUID getCustomerId() {
         return customerId;
-    }
-
-    public String getTokenHash() {
-        return tokenHash;
-    }
-
-    public Instant getExpiresAt() {
-        return expiresAt;
-    }
-
-    public Instant getConsumedAt() {
-        return consumedAt;
     }
 }

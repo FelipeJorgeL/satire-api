@@ -41,10 +41,3 @@ tests {
     expect(res.body.refreshToken).to.be.a("string");
   });
 }
-
-docs {
-  Run "Login customer" first so REFRESH_TOKEN is set.
-  Consumes the current refresh token and issues a new access + refresh token pair
-  (rotation) — running this request twice in a row without re-running "Login customer"
-  in between still works, since each run saves the new REFRESH_TOKEN for the next one.
-}

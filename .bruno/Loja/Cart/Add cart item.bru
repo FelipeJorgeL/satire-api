@@ -1,0 +1,29 @@
+meta {
+  name: Add cart item
+  type: http
+  seq: 100
+  tags: [
+    bruno
+    store
+  ]
+}
+
+post {
+  url: {{BASE_URL}}/api/v1/me/cart/items
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+  Content-Type: application/json
+}
+
+body:json {
+  {"variationId":"{{VARIATION_ID}}","quantity":1}
+}
+
+docs {
+  Implemented API endpoint. Replace placeholder IDs and complete the payload before execution.
+}
+

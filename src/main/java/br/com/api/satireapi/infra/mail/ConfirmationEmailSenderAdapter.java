@@ -1,10 +1,10 @@
 package br.com.api.satireapi.infra.mail;
 
-import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmationEmailDelivery;
-import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmationEmailOutboxStore;
-import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmationEmailSender;
-import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmationLinkProtector;
+import br.com.api.satireapi.domain.customer.ConfirmationEmailOutboxStore;
+import br.com.api.satireapi.domain.customer.ConfirmationEmailSender;
+import br.com.api.satireapi.domain.customer.ConfirmationLinkProtector;
 import java.time.Instant;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -35,37 +35,31 @@ class ConfirmationEmailSenderAdapter {
         this.retryBaseSeconds = Math.max(1, retryBase.toSeconds());
     }
 
-    void dispatch(java.util.UUID outboxId) {
+    void dispatch(UUID outboxId) {
         var now = Instant.now();
         if (!rateLimiter.tryAcquire(now)) {
             return;
         }
-
         var delivery = outboxStore.claim(outboxId, now);
         if (delivery.isEmpty()) {
             return;
         }
-
         try {
-            send(delivery.get());
+            var link = linkProtector.unprotect(delivery.get().protectedLink());
+            emailSender.sendEmailConfirmation(delivery.get().recipient(), link);
             outboxStore.markSent(outboxId, Instant.now());
-        } catch (RuntimeException ex) {
+        } catch (RuntimeException exception) {
             var attempt = delivery.get().attempts();
             var delay = retryBaseSeconds * (1L << Math.min(Math.max(attempt - 1, 0), 10));
             var nextAttemptAt = Instant.now().plusSeconds(Math.min(delay, 86_400));
-            outboxStore.markFailed(outboxId, nextAttemptAt, sanitizedError(ex));
+            outboxStore.markFailed(outboxId, nextAttemptAt, sanitizedError(exception));
         }
     }
 
-    private void send(ConfirmationEmailDelivery delivery) {
-        var link = linkProtector.unprotect(delivery.protectedLink());
-        emailSender.sendEmailConfirmation(delivery.recipient(), link);
-    }
-
-    private static String sanitizedError(RuntimeException ex) {
-        var message = ex.getClass().getSimpleName();
-        if (ex.getMessage() != null && !ex.getMessage().isBlank()) {
-            message += ": " + URL.matcher(ex.getMessage()).replaceAll("[url]")
+    private static String sanitizedError(RuntimeException exception) {
+        var message = exception.getClass().getSimpleName();
+        if (exception.getMessage() != null && !exception.getMessage().isBlank()) {
+            message += ": " + URL.matcher(exception.getMessage()).replaceAll("[url]")
                 .replaceAll("[\\r\\n]+", " ");
         }
         return message.length() <= MAX_ERROR_LENGTH
