@@ -1,0 +1,29 @@
+meta {
+  name: Create order
+  type: http
+  seq: 100
+  tags: [
+    bruno
+    store
+  ]
+}
+
+post {
+  url: {{BASE_URL}}/api/v1/orders
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+  Content-Type: application/json
+}
+
+body:json {
+  {"addressId":"{{ADDRESS_ID}}"}
+}
+
+docs {
+  Implemented API endpoint. Replace placeholder IDs and complete the payload before execution.
+}
+

@@ -1,0 +1,29 @@
+meta {
+  name: Change product status
+  type: http
+  seq: 100
+  tags: [
+    bruno
+    admin
+  ]
+}
+
+patch {
+  url: {{BASE_URL}}/api/v1/admin/products/{{PRODUCT_ID}}/status
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ADMIN_ACCESS_TOKEN}}
+  Content-Type: application/json
+}
+
+body:json {
+  {"active":true}
+}
+
+docs {
+  Implemented API endpoint. Replace placeholder IDs and complete the payload before execution.
+}
+

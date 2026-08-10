@@ -1,0 +1,24 @@
+meta {
+  name: Get address
+  type: http
+  seq: 100
+  tags: [
+    bruno
+    store
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/me/addresses/{{ADDRESS_ID}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+}
+
+docs {
+  Implemented API endpoint. Replace placeholder IDs and complete the payload before execution.
+}
+

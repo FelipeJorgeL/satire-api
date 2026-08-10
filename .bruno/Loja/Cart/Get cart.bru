@@ -1,0 +1,24 @@
+meta {
+  name: Get cart
+  type: http
+  seq: 100
+  tags: [
+    bruno
+    store
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/me/cart
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+}
+
+docs {
+  Implemented API endpoint. Replace placeholder IDs and complete the payload before execution.
+}
+
