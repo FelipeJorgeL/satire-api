@@ -1,4 +1,4 @@
-package br.com.api.satireapi.domain.customer.internal.usecase;
+package br.com.api.satireapi.domain.customer.internal.usecase.administration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

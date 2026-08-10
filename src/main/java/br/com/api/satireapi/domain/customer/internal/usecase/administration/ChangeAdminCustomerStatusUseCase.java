@@ -1,4 +1,4 @@
-package br.com.api.satireapi.domain.customer.internal.usecase;
+package br.com.api.satireapi.domain.customer.internal.usecase.administration;
 
 import java.util.UUID;
 import org.springframework.stereotype.Service;

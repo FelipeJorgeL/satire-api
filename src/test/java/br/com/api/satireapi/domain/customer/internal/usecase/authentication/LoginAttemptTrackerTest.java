@@ -1,4 +1,6 @@
-package br.com.api.satireapi.domain.customer.internal.usecase;
+package br.com.api.satireapi.domain.customer.internal.usecase.authentication;
+
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.LoginAttemptTracker;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;

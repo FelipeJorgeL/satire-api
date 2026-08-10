@@ -1,4 +1,4 @@
-package br.com.api.satireapi.domain.customer.internal.usecase;
+package br.com.api.satireapi.domain.customer.internal.usecase.administration;
 
 import br.com.api.satireapi.domain.customer.internal.dto.request.AdminCustomerFilter;
 import br.com.api.satireapi.domain.customer.internal.dto.response.AdminCustomerListItemResponse;

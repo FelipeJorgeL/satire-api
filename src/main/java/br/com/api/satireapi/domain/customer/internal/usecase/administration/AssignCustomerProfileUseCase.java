@@ -1,6 +1,7 @@
-package br.com.api.satireapi.domain.customer.internal.usecase;
+package br.com.api.satireapi.domain.customer.internal.usecase.administration;
 
 import java.util.UUID;
+import br.com.api.satireapi.domain.customer.internal.usecase.CustomerProfileNotConfiguredException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -4,7 +4,7 @@ import br.com.api.satireapi.domain.customer.internal.dto.request.AdminCustomerFi
 import br.com.api.satireapi.domain.customer.internal.model.Address;
 import br.com.api.satireapi.domain.customer.internal.model.Customer;
 import br.com.api.satireapi.domain.customer.internal.model.Profile;
-import br.com.api.satireapi.domain.customer.internal.usecase.AdminCustomerQuery;
+import br.com.api.satireapi.domain.customer.internal.usecase.administration.AdminCustomerQuery;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;

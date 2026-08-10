@@ -1,4 +1,4 @@
-package br.com.api.satireapi.domain.customer.internal.usecase;
+package br.com.api.satireapi.domain.customer.internal.usecase.authentication;
 
 import java.time.Clock;
 import java.time.Duration;

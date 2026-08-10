@@ -4,6 +4,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -14,6 +16,7 @@ import org.hibernate.type.SqlTypes;
 public class Address {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "usuario_id", nullable = false)
@@ -55,6 +58,78 @@ public class Address {
     private OffsetDateTime createdAt;
 
     protected Address() {
+    }
+
+    private Address(
+        UUID customerId,
+        String label,
+        String recipient,
+        String postalCode,
+        String street,
+        String number,
+        String complement,
+        String neighborhood,
+        String city,
+        String state,
+        boolean primary
+    ) {
+        this.customerId = customerId;
+        this.label = blankToNull(label);
+        this.recipient = recipient.trim();
+        this.postalCode = postalCode.trim();
+        this.street = street.trim();
+        this.number = number.trim();
+        this.complement = blankToNull(complement);
+        this.neighborhood = neighborhood.trim();
+        this.city = city.trim();
+        this.state = state.trim().toUpperCase(java.util.Locale.ROOT);
+        this.primary = primary;
+        this.createdAt = OffsetDateTime.now();
+    }
+
+    public static Address create(
+        UUID customerId,
+        String label,
+        String recipient,
+        String postalCode,
+        String street,
+        String number,
+        String complement,
+        String neighborhood,
+        String city,
+        String state,
+        boolean primary
+    ) {
+        return new Address(
+            customerId, label, recipient, postalCode, street, number,
+            complement, neighborhood, city, state, primary
+        );
+    }
+
+    public void update(
+        String label,
+        String recipient,
+        String postalCode,
+        String street,
+        String number,
+        String complement,
+        String neighborhood,
+        String city,
+        String state
+    ) {
+        this.label = blankToNull(label);
+        this.recipient = recipient.trim();
+        this.postalCode = postalCode.trim();
+        this.street = street.trim();
+        this.number = number.trim();
+        this.complement = blankToNull(complement);
+        this.neighborhood = neighborhood.trim();
+        this.city = city.trim();
+        this.state = state.trim().toUpperCase(java.util.Locale.ROOT);
+    }
+
+    public void markPrimary(boolean primary) {
+        this.primary = primary;
     }
 
     public UUID getId() {
@@ -103,5 +178,13 @@ public class Address {
 
     public OffsetDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public UUID getCustomerId() {
+        return customerId;
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }
