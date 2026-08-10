@@ -1,4 +1,4 @@
-package br.com.api.satireapi.domain.customer.internal.usecase;
+package br.com.api.satireapi.domain.customer.internal.usecase.authentication;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -17,6 +17,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import br.com.api.satireapi.domain.customer.internal.dto.request.LoginRequest;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.AuthenticateCustomerUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.InvalidCredentialsException;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.LoginAttemptTracker;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.TooManyLoginAttemptsException;
+import br.com.api.satireapi.domain.customer.internal.usecase.CustomerFinder;
 import br.com.api.satireapi.domain.customer.internal.model.Customer;
 import br.com.api.satireapi.domain.customer.internal.model.Profile;
 import br.com.api.satireapi.infra.security.jwt.JwtTokenService;

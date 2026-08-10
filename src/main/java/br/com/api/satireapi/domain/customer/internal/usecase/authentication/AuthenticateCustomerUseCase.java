@@ -1,4 +1,4 @@
-package br.com.api.satireapi.domain.customer.internal.usecase;
+package br.com.api.satireapi.domain.customer.internal.usecase.authentication;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -8,6 +8,7 @@ import br.com.api.satireapi.domain.customer.internal.dto.request.LoginRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.response.LoginResponse;
 import br.com.api.satireapi.domain.customer.internal.model.Customer;
 import br.com.api.satireapi.domain.customer.internal.model.Profile;
+import br.com.api.satireapi.domain.customer.internal.usecase.CustomerFinder;
 import br.com.api.satireapi.infra.security.jwt.JwtTokenService;
 
 @Service

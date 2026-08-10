@@ -1,4 +1,4 @@
-package br.com.api.satireapi.domain.customer.internal.usecase;
+package br.com.api.satireapi.domain.customer.internal.usecase.administration;
 
 import br.com.api.satireapi.domain.customer.internal.dto.request.UpdateAdminCustomerRequest;
 import java.util.UUID;

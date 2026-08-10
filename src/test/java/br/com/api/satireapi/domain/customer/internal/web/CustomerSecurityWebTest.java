@@ -10,15 +10,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.com.api.satireapi.domain.customer.CustomerGateway;
+import br.com.api.satireapi.domain.customer.CustomerAuthenticationGateway;
+import br.com.api.satireapi.domain.customer.CustomerAuthentication;
 import br.com.api.satireapi.domain.customer.dto.CustomerSummary;
 import br.com.api.satireapi.domain.customer.internal.dto.request.LoginRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.request.RegisterCustomerRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.response.LoginResponse;
-import br.com.api.satireapi.domain.customer.internal.usecase.AuthenticateCustomerUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.AuthenticateCustomerUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.CustomerEmailAlreadyExistsException;
-import br.com.api.satireapi.domain.customer.internal.usecase.InvalidCredentialsException;
-import br.com.api.satireapi.domain.customer.internal.usecase.RegisterCustomerUseCase;
-import br.com.api.satireapi.domain.customer.internal.usecase.TooManyLoginAttemptsException;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.InvalidCredentialsException;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.RegisterCustomerUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.TooManyLoginAttemptsException;
 import br.com.api.satireapi.infra.security.SecurityConfig;
 import br.com.api.satireapi.infra.security.jwt.JwtAuthenticationFilter;
 import br.com.api.satireapi.infra.security.jwt.JwtTokenService;
@@ -59,6 +61,9 @@ class CustomerSecurityWebTest {
 
     @MockitoBean
     private CustomerGateway customerGateway;
+
+    @MockitoBean
+    private CustomerAuthenticationGateway customerAuthenticationGateway;
 
     @Test
     void registerReturnsSameGenericResponseForNewAndExistingEmail() throws Exception {
@@ -116,6 +121,8 @@ class CustomerSecurityWebTest {
     void meWithValidTokenIsOk() throws Exception {
         var customerId = UUID.randomUUID();
         var token = jwtTokenService.generate(customerId.toString(), "felipe@example.com", List.of("CLIENTE"));
+        when(customerAuthenticationGateway.findById(customerId))
+            .thenReturn(Optional.of(new CustomerAuthentication(customerId, true, java.util.Set.of("CLIENTE"))));
         when(customerGateway.findById(customerId))
             .thenReturn(Optional.of(new CustomerSummary(customerId, "Felipe", "felipe@example.com", true)));
 
@@ -127,6 +134,8 @@ class CustomerSecurityWebTest {
     void customersEndpointRejectsClienteProfile() throws Exception {
         var customerId = UUID.randomUUID();
         var token = jwtTokenService.generate(customerId.toString(), "felipe@example.com", List.of("CLIENTE"));
+        when(customerAuthenticationGateway.findById(customerId))
+            .thenReturn(Optional.of(new CustomerAuthentication(customerId, true, java.util.Set.of("CLIENTE"))));
 
         mockMvc.perform(get("/api/v1/customers/" + UUID.randomUUID()).header("Authorization", "Bearer " + token))
             .andExpect(status().isForbidden());
@@ -134,7 +143,10 @@ class CustomerSecurityWebTest {
 
     @Test
     void customersEndpointRequiresAdminForAnyMethod() throws Exception {
-        var token = jwtTokenService.generate(UUID.randomUUID().toString(), "felipe@example.com", List.of("CLIENTE"));
+        var customerId = UUID.randomUUID();
+        var token = jwtTokenService.generate(customerId.toString(), "felipe@example.com", List.of("CLIENTE"));
+        when(customerAuthenticationGateway.findById(customerId))
+            .thenReturn(Optional.of(new CustomerAuthentication(customerId, true, java.util.Set.of("CLIENTE"))));
 
         mockMvc.perform(post("/api/v1/customers/" + UUID.randomUUID()).header("Authorization", "Bearer " + token))
             .andExpect(status().isForbidden());
@@ -145,6 +157,8 @@ class CustomerSecurityWebTest {
         var adminId = UUID.randomUUID();
         var targetId = UUID.randomUUID();
         var token = jwtTokenService.generate(adminId.toString(), "admin@example.com", List.of("ADMIN"));
+        when(customerAuthenticationGateway.findById(adminId))
+            .thenReturn(Optional.of(new CustomerAuthentication(adminId, true, java.util.Set.of("ADMIN"))));
         when(customerGateway.findById(targetId))
             .thenReturn(Optional.of(new CustomerSummary(targetId, "Cliente", "cliente@example.com", true)));
 

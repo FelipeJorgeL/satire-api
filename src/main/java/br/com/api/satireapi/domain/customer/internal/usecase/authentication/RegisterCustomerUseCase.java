@@ -1,4 +1,4 @@
-package br.com.api.satireapi.domain.customer.internal.usecase;
+package br.com.api.satireapi.domain.customer.internal.usecase.authentication;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -8,6 +8,10 @@ import br.com.api.satireapi.domain.customer.internal.dto.request.RegisterCustome
 import br.com.api.satireapi.domain.customer.internal.dto.response.CustomerResponse;
 import br.com.api.satireapi.domain.customer.internal.mapper.CustomerMapper;
 import br.com.api.satireapi.domain.customer.internal.model.Customer;
+import br.com.api.satireapi.domain.customer.internal.usecase.CustomerEmailAlreadyExistsException;
+import br.com.api.satireapi.domain.customer.internal.usecase.CustomerProfileNotConfiguredException;
+import br.com.api.satireapi.domain.customer.internal.usecase.CustomerRegistry;
+import br.com.api.satireapi.domain.customer.internal.usecase.ProfileFinder;
 
 @Service
 public class RegisterCustomerUseCase {
