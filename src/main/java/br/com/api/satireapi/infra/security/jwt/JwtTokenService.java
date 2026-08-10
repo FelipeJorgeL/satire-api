@@ -1,5 +1,6 @@
 package br.com.api.satireapi.infra.security.jwt;
 
+import br.com.api.satireapi.domain.customer.AccessTokenIssuer;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -17,7 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class JwtTokenService {
+public class JwtTokenService implements AccessTokenIssuer {
 
     private final SecretKey signingKey;
     private final Duration expiration;

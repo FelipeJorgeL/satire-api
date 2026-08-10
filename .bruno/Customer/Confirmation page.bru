@@ -1,0 +1,24 @@
+meta {
+  name: Confirmation page
+  type: http
+  seq: 5
+  tags: [
+    customer
+    manual
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/auth/confirm?token={{CONFIRMATION_TOKEN}}
+  auth: none
+}
+
+params:query {
+  token: {{CONFIRMATION_TOKEN}}
+}
+
+tests {
+  test("returns confirmation page", function () {
+    expect(res.status).to.equal(200);
+  });
+}

@@ -72,7 +72,7 @@ public class Customer {
         this.passwordHash = passwordHash;
         this.cpf = blankToNull(cpf);
         this.phone = blankToNull(phone);
-        this.active = true;
+        this.active = false;
         this.createdAt = OffsetDateTime.now();
         this.updatedAt = this.createdAt;
     }
@@ -120,6 +120,10 @@ public class Customer {
         this.active = active;
         this.deletedAt = active ? null : OffsetDateTime.now();
         touch();
+    }
+
+    public void activate() {
+        changeStatus(true);
     }
 
     public UUID getId() {

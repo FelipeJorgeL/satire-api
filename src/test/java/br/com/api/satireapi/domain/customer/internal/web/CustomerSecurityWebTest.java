@@ -17,9 +17,14 @@ import br.com.api.satireapi.domain.customer.internal.dto.request.LoginRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.request.RegisterCustomerRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.response.LoginResponse;
 import br.com.api.satireapi.domain.customer.internal.usecase.authentication.AuthenticateCustomerUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.ConfirmEmailUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.CustomerEmailAlreadyExistsException;
 import br.com.api.satireapi.domain.customer.internal.usecase.authentication.InvalidCredentialsException;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.LogoutUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.RefreshAccessTokenUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.authentication.RegisterCustomerUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.RegistrationRateLimiter;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.ResendConfirmationEmailUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.authentication.TooManyLoginAttemptsException;
 import br.com.api.satireapi.infra.security.SecurityConfig;
 import br.com.api.satireapi.infra.security.jwt.JwtAuthenticationFilter;
@@ -60,6 +65,21 @@ class CustomerSecurityWebTest {
     private AuthenticateCustomerUseCase authenticateCustomerUseCase;
 
     @MockitoBean
+    private RefreshAccessTokenUseCase refreshAccessTokenUseCase;
+
+    @MockitoBean
+    private LogoutUseCase logoutUseCase;
+
+    @MockitoBean
+    private ConfirmEmailUseCase confirmEmailUseCase;
+
+    @MockitoBean
+    private RegistrationRateLimiter registrationRateLimiter;
+
+    @MockitoBean
+    private ResendConfirmationEmailUseCase resendConfirmationEmailUseCase;
+
+    @MockitoBean
     private CustomerGateway customerGateway;
 
     @MockitoBean
@@ -67,6 +87,7 @@ class CustomerSecurityWebTest {
 
     @Test
     void registerReturnsSameGenericResponseForNewAndExistingEmail() throws Exception {
+        when(registrationRateLimiter.allow(any(), any(), any())).thenReturn(true);
         var body = objectMapper.writeValueAsString(new RegisterCustomerRequest(
             "Felipe Jorge", "felipe@example.com", "safe-password", "12345678901", "11999999999"));
 
@@ -108,6 +129,43 @@ class CustomerSecurityWebTest {
         mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new LoginRequest("felipe@example.com", "wrong-password"))))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void refreshIsPublicAndReturnsRotatedTokens() throws Exception {
+        when(refreshAccessTokenUseCase.execute(any())).thenReturn(
+            new LoginResponse("jwt-token", "Bearer", 3600, "refresh-token", 2592000)
+        );
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"refreshToken\":\"refresh-token\"}"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void emailConfirmationRoutesArePublic() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/confirm?token=confirmation-token"))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/auth/confirm?token=confirmation-token"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void resendConfirmationIsPublicAndGeneric() throws Exception {
+        when(registrationRateLimiter.allow(any(), any(), any())).thenReturn(true);
+
+        mockMvc.perform(post("/api/v1/auth/confirm/resend")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"felipe@example.com\"}"))
+            .andExpect(status().isAccepted());
+    }
+
+    @Test
+    void logoutRequiresAuthentication() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout"))
             .andExpect(status().isUnauthorized());
     }
 

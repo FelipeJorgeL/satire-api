@@ -16,6 +16,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import br.com.api.satireapi.domain.customer.AccessTokenIssuer;
 import br.com.api.satireapi.domain.customer.internal.dto.request.LoginRequest;
 import br.com.api.satireapi.domain.customer.internal.usecase.authentication.AuthenticateCustomerUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.authentication.InvalidCredentialsException;
@@ -24,19 +25,25 @@ import br.com.api.satireapi.domain.customer.internal.usecase.authentication.TooM
 import br.com.api.satireapi.domain.customer.internal.usecase.CustomerFinder;
 import br.com.api.satireapi.domain.customer.internal.model.Customer;
 import br.com.api.satireapi.domain.customer.internal.model.Profile;
-import br.com.api.satireapi.infra.security.jwt.JwtTokenService;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.OpaqueTokenGenerator;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.RefreshTokenStore;
 
 class AuthenticateCustomerUseCaseTest {
 
     private final CustomerFinder customerFinder = mock(CustomerFinder.class);
     private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
-    private final JwtTokenService jwtTokenService = mock(JwtTokenService.class);
+    private final AccessTokenIssuer accessTokenIssuer = mock(AccessTokenIssuer.class);
     private final LoginAttemptTracker loginAttemptTracker = mock(LoginAttemptTracker.class);
+    private final RefreshTokenStore refreshTokenStore = mock(RefreshTokenStore.class);
+    private final OpaqueTokenGenerator tokenGenerator = new OpaqueTokenGenerator();
     private final AuthenticateCustomerUseCase useCase = new AuthenticateCustomerUseCase(
         customerFinder,
         passwordEncoder,
-        jwtTokenService,
-        loginAttemptTracker
+        accessTokenIssuer,
+        loginAttemptTracker,
+        refreshTokenStore,
+        tokenGenerator,
+        2592000
     );
 
     @Test
@@ -54,16 +61,19 @@ class AuthenticateCustomerUseCaseTest {
 
         when(customerFinder.findByEmail("felipe@example.com")).thenReturn(Optional.of(customer));
         when(passwordEncoder.matches("safe-password", "encoded-password")).thenReturn(true);
-        when(jwtTokenService.generate(customerId.toString(), "felipe@example.com", List.of("CLIENTE")))
+        when(accessTokenIssuer.generate(customerId.toString(), "felipe@example.com", List.of("CLIENTE")))
             .thenReturn("jwt-token");
-        when(jwtTokenService.expirationSeconds()).thenReturn(3600L);
+        when(accessTokenIssuer.expirationSeconds()).thenReturn(3600L);
 
         var response = useCase.execute(new LoginRequest(" FELIPE@EXAMPLE.COM ", "safe-password"));
 
         assertEquals("jwt-token", response.accessToken());
         assertEquals("Bearer", response.tokenType());
         assertEquals(3600L, response.expiresIn());
+        assertEquals(43, response.refreshToken().length());
+        assertEquals(2592000L, response.refreshExpiresIn());
         verify(loginAttemptTracker).recordSuccess("felipe@example.com");
+        verify(refreshTokenStore).save(eq(customerId), any(), any());
     }
 
     @Test
