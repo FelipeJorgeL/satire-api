@@ -9,20 +9,22 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface ConfirmationEmailOutboxRepository extends JpaRepository<ConfirmationEmailOutbox, UUID> {
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
     @Query("""
-        UPDATE ConfirmationEmailOutbox o
-           SET o.status = :sending,
-               o.attempts = o.attempts + 1,
-               o.lastAttemptAt = :now,
-               o.updatedAt = :now
-         WHERE o.id = :id
-           AND (
-               o.status = :pending
-               OR (o.status = :failed AND o.nextAttemptAt <= :now)
+        update ConfirmationEmailOutbox outbox
+           set outbox.status = :sending,
+               outbox.attempts = outbox.attempts + 1,
+               outbox.lastAttemptAt = :now,
+               outbox.updatedAt = :now
+         where outbox.id = :id
+           and (
+               outbox.status = :pending
+               or (outbox.status = :failed and outbox.nextAttemptAt <= :now)
            )
         """)
     int claim(
@@ -34,12 +36,12 @@ public interface ConfirmationEmailOutboxRepository extends JpaRepository<Confirm
     );
 
     @Query("""
-        SELECT o.id
-          FROM ConfirmationEmailOutbox o
-         WHERE o.status IN (:pending, :failed)
-           AND o.nextAttemptAt <= :now
-           AND o.attempts < :maxAttempts
-         ORDER BY o.createdAt
+        select outbox.id
+          from ConfirmationEmailOutbox outbox
+         where outbox.status in (:pending, :failed)
+           and outbox.nextAttemptAt <= :now
+           and outbox.attempts < :maxAttempts
+         order by outbox.createdAt
         """)
     List<UUID> findReady(
         @Param("now") Instant now,
@@ -50,13 +52,14 @@ public interface ConfirmationEmailOutboxRepository extends JpaRepository<Confirm
     );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
     @Query("""
-        UPDATE ConfirmationEmailOutbox o
-           SET o.status = :pending,
-               o.nextAttemptAt = :now,
-               o.updatedAt = :now
-         WHERE o.status = :sending
-           AND o.lastAttemptAt < :threshold
+        update ConfirmationEmailOutbox outbox
+           set outbox.status = :pending,
+               outbox.nextAttemptAt = :now,
+               outbox.updatedAt = :now
+         where outbox.status = :sending
+           and outbox.lastAttemptAt < :threshold
         """)
     int resetStale(
         @Param("threshold") Instant threshold,
@@ -66,13 +69,14 @@ public interface ConfirmationEmailOutboxRepository extends JpaRepository<Confirm
     );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
     @Query("""
-        UPDATE ConfirmationEmailOutbox o
-           SET o.status = :sent,
-               o.updatedAt = :now,
-               o.lastFailure = NULL
-         WHERE o.id = :id
-           AND o.status = :sending
+        update ConfirmationEmailOutbox outbox
+           set outbox.status = :sent,
+               outbox.updatedAt = :now,
+               outbox.lastFailure = null
+         where outbox.id = :id
+           and outbox.status = :sending
         """)
     int markSent(
         @Param("id") UUID id,
@@ -82,14 +86,15 @@ public interface ConfirmationEmailOutboxRepository extends JpaRepository<Confirm
     );
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
     @Query("""
-        UPDATE ConfirmationEmailOutbox o
-           SET o.status = :failed,
-               o.nextAttemptAt = :nextAttemptAt,
-               o.lastFailure = :lastFailure,
-               o.updatedAt = :now
-         WHERE o.id = :id
-           AND o.status = :sending
+        update ConfirmationEmailOutbox outbox
+           set outbox.status = :failed,
+               outbox.nextAttemptAt = :nextAttemptAt,
+               outbox.lastFailure = :lastFailure,
+               outbox.updatedAt = :now
+         where outbox.id = :id
+           and outbox.status = :sending
         """)
     int markFailed(
         @Param("id") UUID id,

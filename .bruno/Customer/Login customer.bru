@@ -1,7 +1,7 @@
 meta {
   name: Login customer
   type: http
-  seq: 4
+  seq: 3
   tags: [
     customer
     smoke
@@ -37,7 +37,7 @@ tests {
     expect(res.status).to.equal(200);
   });
 
-  test("returns a bearer token and a refresh token", function () {
+  test("returns bearer and refresh tokens", function () {
     expect(res.body.tokenType).to.equal("Bearer");
     expect(res.body.accessToken).to.be.a("string");
     expect(res.body.refreshToken).to.be.a("string");
@@ -45,8 +45,7 @@ tests {
 }
 
 docs {
-  Run "Register customer" then "Confirm email" first — login fails with 401 on an
-  inactive (unconfirmed) account.
-  Saves accessToken into ACCESS_TOKEN and refreshToken into REFRESH_TOKEN, used by
+  Run "Register customer" and "Confirm email" first. Unconfirmed accounts receive 401.
+  Saves the access token into ACCESS_TOKEN and the refresh token into REFRESH_TOKEN for
   "Get authenticated customer", "Refresh access token" and "Logout customer" below.
 }

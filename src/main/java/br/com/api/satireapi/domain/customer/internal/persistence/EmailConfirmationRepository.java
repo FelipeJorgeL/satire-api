@@ -1,23 +1,22 @@
 package br.com.api.satireapi.domain.customer.internal.persistence;
 
+import br.com.api.satireapi.domain.customer.internal.model.EmailConfirmation;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import br.com.api.satireapi.domain.customer.internal.model.EmailConfirmation;
 
 public interface EmailConfirmationRepository extends JpaRepository<EmailConfirmation, UUID> {
 
     @Query("""
-        SELECT e
-          FROM EmailConfirmation e
-         WHERE e.tokenHash = :tokenHash
-           AND e.expiresAt > :now
-           AND e.consumedAt IS NULL
+        select confirmation
+          from EmailConfirmation confirmation
+         where confirmation.tokenHash = :tokenHash
+           and confirmation.expiresAt > :now
+           and confirmation.consumedAt is null
         """)
     Optional<EmailConfirmation> findByTokenHashAndExpiresAtAfter(
         @Param("tokenHash") String tokenHash,

@@ -1,7 +1,7 @@
 meta {
   name: Logout customer
   type: http
-  seq: 12
+  seq: 7
   tags: [
     customer
     smoke
@@ -25,10 +25,6 @@ tests {
 }
 
 docs {
-  Run "Login customer" (and optionally "Refresh access token") first.
-  Revokes the refresh session for this customer — running "Refresh access token"
-  again afterwards with the same REFRESH_TOKEN returns 401. The access token itself
-  keeps working until it naturally expires (up to 1h) — logout does not blacklist it.
-
-  Run this one last: it invalidates REFRESH_TOKEN for anything below it in the collection.
+  Revokes the refresh session for the authenticated customer. The current access token
+  remains valid until its normal expiration; the refresh session cannot be renewed.
 }

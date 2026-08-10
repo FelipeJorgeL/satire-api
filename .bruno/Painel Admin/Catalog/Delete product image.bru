@@ -1,0 +1,24 @@
+meta {
+  name: Delete product image
+  type: http
+  seq: 100
+  tags: [
+    bruno
+    admin
+  ]
+}
+
+delete {
+  url: {{BASE_URL}}/api/v1/admin/products/{{PRODUCT_ID}}/images/{{IMAGE_ID}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ADMIN_ACCESS_TOKEN}}
+}
+
+docs {
+  Implemented API endpoint. Replace placeholder IDs and complete the payload before execution.
+}
+

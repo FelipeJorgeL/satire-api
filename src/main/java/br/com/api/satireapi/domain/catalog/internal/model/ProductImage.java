@@ -1,25 +1,33 @@
 package br.com.api.satireapi.domain.catalog.internal.model;
 
-import jakarta.persistence.*;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "imagens_produtos")
 public class ProductImage {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "url", nullable = false)
+    @Column(name = "produto_id", nullable = false)
+    private UUID productId;
+
+    @Column(name = "url", nullable = false, columnDefinition = "text")
     private String url;
 
-    @Column(name = "texto_alternativo")
-    private String alternativeText;
+    @Column(name = "texto_alternativo", length = 255)
+    private String altText;
 
     @Column(name = "principal", nullable = false)
-    private boolean isMainImage;
+    private boolean primary;
 
     @Column(name = "ordem_exibicao", nullable = false)
     private int displayOrder;
@@ -27,57 +35,60 @@ public class ProductImage {
     @Column(name = "criado_em", nullable = false)
     private OffsetDateTime createdAt;
 
+    protected ProductImage() {
     @Column(name = "atualizado_em", nullable = false)
-    private OffsetDateTime updatedAt;
-
-    @ManyToOne
-    @JoinColumn(name = "produto_id")
-    private Product product;
+    private OffsetDateTime updatedAt;;
 
     public ProductImage() {
     }
 
-    public ProductImage(UUID id, String url, String alternativeText, boolean isMainImage, int displayOrder, OffsetDateTime createdAt, OffsetDateTime updatedAt, Product product) {
-        this.id = id;
-        this.url = url;
-        this.alternativeText = alternativeText;
-        this.isMainImage = isMainImage;
+    private ProductImage(
+        UUID productId,
+        String url,
+        String altText,
+        boolean primary,
+        int displayOrder
+    ) {
+        this.productId = productId;
+        this.url = url.trim();
+        this.altText = blankToNull(altText);
+        this.primary = primary;
         this.displayOrder = displayOrder;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.product = product;
+        this.createdAt = OffsetDateTime.now();
+    }
+
+    public static ProductImage create(
+        UUID productId,
+        String url,
+        String altText,
+        boolean primary,
+        int displayOrder
+    ) {
+        return new ProductImage(productId, url, altText, primary, displayOrder);
     }
 
     public UUID getId() {
         return id;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
+    public UUID getProductId() {
+        return productId;
     }
 
     public String getUrl() {
         return url;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    public String getAltText() {
+        return altText;
     }
 
-    public String getAlternativeText() {
-        return alternativeText;
+    public boolean isPrimary() {
+        return primary;
     }
 
-    public void setAlternativeText(String alternativeText) {
-        this.alternativeText = alternativeText;
-    }
-
-    public boolean isMainImage() {
-        return isMainImage;
-    }
-
-    public void setMainImage(boolean mainImage) {
-        isMainImage = mainImage;
+    public boolean isDecorative() {
+        return altText == null;
     }
 
     public int getDisplayOrder() {
@@ -92,23 +103,7 @@ public class ProductImage {
         return createdAt;
     }
 
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public OffsetDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public Product getProduct() {
-        return product;
-    }
-
-    public void setProduct(Product product) {
-        this.product = product;
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

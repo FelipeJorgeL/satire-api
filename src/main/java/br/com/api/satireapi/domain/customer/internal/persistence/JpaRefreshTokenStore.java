@@ -1,12 +1,11 @@
 package br.com.api.satireapi.domain.customer.internal.persistence;
 
+import br.com.api.satireapi.domain.customer.internal.model.RefreshToken;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.RefreshTokenStore;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
-
-import br.com.api.satireapi.domain.customer.internal.model.RefreshToken;
-import br.com.api.satireapi.domain.customer.internal.usecase.RefreshTokenStore;
 
 @Component
 class JpaRefreshTokenStore implements RefreshTokenStore {
@@ -24,7 +23,8 @@ class JpaRefreshTokenStore implements RefreshTokenStore {
 
     @Override
     public Optional<UUID> findCustomerIdByHash(String tokenHash, Instant now) {
-        return repository.findByTokenHashAndExpiresAtAfter(tokenHash, now).map(RefreshToken::getCustomerId);
+        return repository.findByTokenHashAndExpiresAtAfter(tokenHash, now)
+            .map(RefreshToken::getCustomerId);
     }
 
     @Override

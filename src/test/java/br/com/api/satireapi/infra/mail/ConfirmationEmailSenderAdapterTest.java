@@ -6,10 +6,10 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmationEmailDelivery;
-import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmationEmailOutboxStore;
-import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmationEmailSender;
-import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmationLinkProtector;
+import br.com.api.satireapi.domain.customer.ConfirmationEmailDelivery;
+import br.com.api.satireapi.domain.customer.ConfirmationEmailOutboxStore;
+import br.com.api.satireapi.domain.customer.ConfirmationEmailSender;
+import br.com.api.satireapi.domain.customer.ConfirmationLinkProtector;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;

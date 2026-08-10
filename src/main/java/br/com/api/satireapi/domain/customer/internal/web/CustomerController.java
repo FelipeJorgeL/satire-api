@@ -5,27 +5,29 @@ import br.com.api.satireapi.domain.customer.internal.dto.request.RefreshTokenReq
 import br.com.api.satireapi.domain.customer.internal.dto.request.RegisterCustomerRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.request.ResendConfirmationRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.response.LoginResponse;
-import br.com.api.satireapi.domain.customer.internal.usecase.AuthenticateCustomerUseCase;
-import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmEmailUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.CustomerEmailAlreadyExistsException;
-import br.com.api.satireapi.domain.customer.internal.usecase.LogoutUseCase;
-import br.com.api.satireapi.domain.customer.internal.usecase.RefreshAccessTokenUseCase;
-import br.com.api.satireapi.domain.customer.internal.usecase.RegisterCustomerUseCase;
-import br.com.api.satireapi.domain.customer.internal.usecase.RegistrationRateLimiter;
-import br.com.api.satireapi.domain.customer.internal.usecase.ResendConfirmationEmailUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.AuthenticateCustomerUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.ConfirmEmailUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.LogoutUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.RefreshAccessTokenUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.RegisterCustomerUseCase;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.RegistrationRateLimiter;
+import br.com.api.satireapi.domain.customer.internal.usecase.authentication.ResendConfirmationEmailUseCase;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.validation.annotation.Validated;
-import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -68,9 +70,8 @@ class CustomerController {
         }
         try {
             registerCustomer.execute(request);
-        } catch (CustomerEmailAlreadyExistsException | DataIntegrityViolationException ex) {
-            // Resposta idêntica à de sucesso: não revela se o e-mail (ou CPF) já está cadastrado.
-            // DataIntegrityViolationException cobre a corrida de dois registros simultâneos.
+        } catch (CustomerEmailAlreadyExistsException | DataIntegrityViolationException exception) {
+            // Resposta idêntica à de sucesso: não revela se o e-mail ou CPF já existe.
         }
         return ResponseEntity.accepted().build();
     }
@@ -103,15 +104,17 @@ class CustomerController {
     }
 
     @PostMapping("/confirm")
-    ResponseEntity<String> confirm(@RequestParam String token) {
+    ResponseEntity<String> confirm(@RequestParam @Size(max = 256) String token) {
         confirmEmail.execute(token);
         return ResponseEntity.ok("E-mail confirmado. Você já pode fazer login.");
     }
 
     @GetMapping("/confirm")
-    ResponseEntity<String> confirmationPage(@RequestParam String token) {
+    ResponseEntity<String> confirmationPage(@RequestParam @Size(max = 256) String token) {
         var escapedToken = escapeHtml(token);
-        return ResponseEntity.ok("""
+        return ResponseEntity.ok()
+            .contentType(MediaType.TEXT_HTML)
+            .body("""
             <!doctype html>
             <html lang="pt-BR">
               <body>

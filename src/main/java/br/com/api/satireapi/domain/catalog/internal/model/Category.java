@@ -1,7 +1,11 @@
 package br.com.api.satireapi.domain.catalog.internal.model;
 
-import jakarta.persistence.*;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -9,14 +13,15 @@ import java.util.UUID;
 @Entity
 @Table(name = "categorias")
 public class Category {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "nome", nullable = false, length = 180)
+    @Column(name = "nome", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "slug", nullable = false, length = 200, unique = true)
+    @Column(name = "slug", nullable = false, unique = true, length = 120)
     private String slug;
 
     @Column(name = "ativo", nullable = false)
@@ -31,21 +36,34 @@ public class Category {
     @Column(name = "excluido_em")
     private OffsetDateTime deletedAt;
 
-    @OneToMany(mappedBy = "category")
-    private List<Product> products;
-
-    public Category() {
+    protected Category() {
     }
 
-    public Category(UUID id, String name, String slug, boolean active, OffsetDateTime createdAt, OffsetDateTime updatedAt, OffsetDateTime deletedAt, List<Product> products) {
-        this.id = id;
-        this.name = name;
-        this.slug = slug;
+    private Category(String name, String slug) {
+        this.name = name.trim();
+        this.slug = slug.trim();
+        this.active = true;
+        this.createdAt = OffsetDateTime.now();
+        this.updatedAt = this.createdAt;
+    }
+
+    public static Category create(String name, String slug) {
+        return new Category(name, slug);
+    }
+
+    public void update(String name, String slug) {
+        this.name = name == null ? this.name : name.trim();
+        this.slug = slug == null ? this.slug : slug.trim();
+        touch();
+    }
+
+    public void changeStatus(boolean active) {
+        if (this.active == active) {
+            return;
+        }
         this.active = active;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.deletedAt = deletedAt;
-        this.products = products;
+        this.deletedAt = active ? null : OffsetDateTime.now();
+        touch();
     }
 
     public UUID getId() {
@@ -84,6 +102,8 @@ public class Category {
         return createdAt;
     }
 
+    private void touch() {
+        this.updatedAt = OffsetDateTime.now();
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
     }

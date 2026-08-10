@@ -1,9 +1,10 @@
 package br.com.api.satireapi.infra.mail;
 
-import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmationEmailOutboxStore;
-import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmationEmailQueuedEvent;
+import br.com.api.satireapi.domain.customer.ConfirmationEmailOutboxStore;
+import br.com.api.satireapi.domain.customer.ConfirmationEmailQueuedEvent;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -33,7 +34,7 @@ class ConfirmationEmailOutboxDispatcher {
         this.delivery = delivery;
         this.staleAfter = staleAfter;
         this.maxAttempts = maxAttempts;
-        this.bulkhead = new Semaphore(bulkheadSize);
+        this.bulkhead = new Semaphore(Math.max(1, bulkheadSize));
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -48,7 +49,7 @@ class ConfirmationEmailOutboxDispatcher {
         outboxStore.findReady(now, maxAttempts, BATCH_SIZE).forEach(this::dispatch);
     }
 
-    private void dispatch(java.util.UUID outboxId) {
+    private void dispatch(UUID outboxId) {
         if (!bulkhead.tryAcquire()) {
             return;
         }

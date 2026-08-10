@@ -1,9 +1,9 @@
 package br.com.api.satireapi.domain.customer.internal.persistence;
 
 import br.com.api.satireapi.domain.customer.internal.model.ConfirmationEmailOutbox;
-import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmationEmailDelivery;
-import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmationEmailOutboxStore;
-import br.com.api.satireapi.domain.customer.internal.usecase.ConfirmationEmailQueuedEvent;
+import br.com.api.satireapi.domain.customer.ConfirmationEmailDelivery;
+import br.com.api.satireapi.domain.customer.ConfirmationEmailOutboxStore;
+import br.com.api.satireapi.domain.customer.ConfirmationEmailQueuedEvent;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +30,9 @@ class JpaConfirmationEmailOutboxStore implements ConfirmationEmailOutboxStore {
     @Override
     @Transactional
     public void enqueue(UUID customerId, String recipient, String protectedLink) {
-        var outbox = ConfirmationEmailOutbox.queue(customerId, recipient, protectedLink, Instant.now());
+        var outbox = ConfirmationEmailOutbox.queue(
+            customerId, recipient, protectedLink, Instant.now()
+        );
         repository.save(outbox);
         eventPublisher.publishEvent(new ConfirmationEmailQueuedEvent(outbox.getId()));
     }

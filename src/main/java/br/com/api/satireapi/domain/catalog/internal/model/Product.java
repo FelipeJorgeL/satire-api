@@ -1,7 +1,11 @@
 package br.com.api.satireapi.domain.catalog.internal.model;
 
-import jakarta.persistence.*;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -9,9 +13,13 @@ import java.util.UUID;
 @Entity
 @Table(name = "produtos")
 public class Product {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @Column(name = "categoria_id", nullable = false)
+    private UUID categoryId;
 
     @Column(name = "nome", nullable = false, length = 180)
     private String name;
@@ -34,39 +42,46 @@ public class Product {
     @Column(name = "excluido_em")
     private OffsetDateTime deletedAt;
 
-    @ManyToOne
-    @JoinColumn(name = "categoria_id")
-    private Category category;
-
-    @OneToMany(mappedBy = "product")
-    private List<ProductVariation> productVariations;
-
-    @OneToMany(mappedBy = "product")
-    private List<ProductImage> productImages;
-
-    public Product() {
+    protected Product() {
     }
 
-    public Product(UUID id, String name, String slug, String description, boolean active, OffsetDateTime createdAt, OffsetDateTime updatedAt, OffsetDateTime deletedAt, Category category, List<ProductVariation> productVariations, List<ProductImage> productImages) {
-        this.id = id;
-        this.name = name;
-        this.slug = slug;
-        this.description = description;
+    private Product(UUID categoryId, String name, String slug, String description) {
+        this.categoryId = categoryId;
+        this.name = name.trim();
+        this.slug = slug.trim();
+        this.description = blankToNull(description);
+        this.active = true;
+        this.createdAt = OffsetDateTime.now();
+        this.updatedAt = this.createdAt;
+    }
+
+    public static Product create(UUID categoryId, String name, String slug, String description) {
+        return new Product(categoryId, name, slug, description);
+    }
+
+    public void replace(UUID categoryId, String name, String slug, String description) {
+        this.categoryId = categoryId;
+        this.name = name.trim();
+        this.slug = slug.trim();
+        this.description = blankToNull(description);
+        touch();
+    }
+
+    public void changeStatus(boolean active) {
+        if (this.active == active) {
+            return;
+        }
         this.active = active;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.deletedAt = deletedAt;
-        this.category = category;
-        this.productVariations = productVariations;
-        this.productImages = productImages;
+        this.deletedAt = active ? null : OffsetDateTime.now();
+        touch();
     }
 
     public UUID getId() {
         return id;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
+    public UUID getCategoryId() {
+        return categoryId;
     }
 
     public String getName() {
@@ -105,51 +120,11 @@ public class Product {
         return createdAt;
     }
 
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
-    public OffsetDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public OffsetDateTime getDeletedAt() {
-        return deletedAt;
-    }
-
-    public void setDeletedAt(OffsetDateTime deletedAt) {
-        this.deletedAt = deletedAt;
-    }
-
-    public Category getCategory() {
-        return category;
-    }
-
-    public void setCategory(Category category) {
-        this.category = category;
-    }
-
-    public List<ProductVariation> getProductVariations() {
-        return productVariations;
-    }
-
-    public void setProductVariations(List<ProductVariation> productVariations) {
-        this.productVariations = productVariations;
-    }
-
-    public List<ProductImage> getProductImages() {
-        return productImages;
-    }
-
-    public void setProductImages(List<ProductImage> productImages) {
-        this.productImages = productImages;
-    }
-
-    public void deactivate() {
-        this.active = false;
+    private void touch() {
+        this.updatedAt = OffsetDateTime.now();
     }
 }

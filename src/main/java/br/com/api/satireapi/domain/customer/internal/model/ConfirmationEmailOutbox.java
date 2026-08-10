@@ -85,10 +85,6 @@ public class ConfirmationEmailOutbox {
         return id;
     }
 
-    public UUID getCustomerId() {
-        return customerId;
-    }
-
     public String getRecipient() {
         return recipient;
     }

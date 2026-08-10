@@ -1,0 +1,28 @@
+meta {
+  name: Create address
+  type: http
+  seq: 100
+  tags: [
+    bruno
+    store
+  ]
+}
+
+post {
+  url: {{BASE_URL}}/api/v1/me/addresses
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+  Content-Type: application/json
+}
+
+body:json {
+}
+
+docs {
+  Implemented API endpoint. Replace placeholder IDs and complete the payload before execution.
+}
+

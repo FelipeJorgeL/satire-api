@@ -1,0 +1,36 @@
+meta {
+  name: Resend confirmation
+  type: http
+  seq: 3
+  tags: [
+    customer
+    manual
+  ]
+}
+
+post {
+  url: {{BASE_URL}}/api/v1/auth/confirm/resend
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{CUSTOMER_EMAIL}}"
+  }
+}
+
+tests {
+  test("returns generic 202 Accepted", function () {
+    expect(res.status).to.equal(202);
+  });
+}
+
+docs {
+  Requeues confirmation only for an existing inactive customer. The response is always
+  generic and does not reveal whether the e-mail exists.
+}

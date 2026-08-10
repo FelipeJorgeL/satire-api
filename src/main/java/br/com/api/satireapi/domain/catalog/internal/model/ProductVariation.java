@@ -1,28 +1,39 @@
 package br.com.api.satireapi.domain.catalog.internal.model;
 
-import jakarta.persistence.*;
-
+import br.com.api.satireapi.domain.catalog.ProductVariationStockCapacityExceededException;
+import br.com.api.satireapi.domain.catalog.ProductVariationStockUnavailableException;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "variacoes_produtos")
 public class ProductVariation {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "nome", nullable = false, length = 180)
-    private String name;
+    @Column(name = "produto_id", nullable = false)
+    private UUID productId;
 
     @Column(name = "sku", nullable = false, length = 60, unique = true)
     private String sku;
 
-    @Column(name = "preco", nullable = false)
-    private double price;
+    @Column(name = "nome", nullable = false, length = 120)
+    private String name;
+
+    @Column(name = "preco", nullable = false, precision = 12, scale = 2)
+    private BigDecimal price;
 
     @Column(name = "estoque", nullable = false)
-    private int inventory;
+    private int stock;
 
     @Column(name = "ativo", nullable = false)
     private boolean active;
@@ -36,64 +47,52 @@ public class ProductVariation {
     @Column(name = "excluido_em")
     private OffsetDateTime deletedAt;
 
-    @ManyToOne
-    @JoinColumn(name = "produto_id")
-    private Product product;
-
-    public ProductVariation() {
+    protected ProductVariation() {
     }
 
-    public ProductVariation(UUID id, String name, String sku, double price, int inventory, boolean active, OffsetDateTime createdAt, OffsetDateTime updatedAt, OffsetDateTime deletedAt, Product product) {
-        this.id = id;
-        this.name = name;
-        this.sku = sku;
+    private ProductVariation(UUID productId, String sku, String name, BigDecimal price, int stock) {
+        this.productId = productId;
+        this.sku = sku.trim();
+        this.name = name.trim();
         this.price = price;
-        this.inventory = inventory;
-        this.active = active;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.deletedAt = deletedAt;
-        this.product = product;
+        this.stock = stock;
+        this.active = true;
+        this.createdAt = OffsetDateTime.now();
+        this.updatedAt = this.createdAt;
+    }
+
+    public static ProductVariation create(
+        UUID productId,
+        String sku,
+        String name,
+        BigDecimal price,
+        int stock
+    ) {
+        return new ProductVariation(productId, sku, name, price, stock);
     }
 
     public UUID getId() {
         return id;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public UUID getProductId() {
+        return productId;
     }
 
     public String getSku() {
         return sku;
     }
 
-    public void setSku(String sku) {
-        this.sku = sku;
+    public String getName() {
+        return name;
     }
 
-    public double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(double price) {
-        this.price = price;
-    }
-
-    public int getInventory() {
-        return inventory;
-    }
-
-    public void setInventory(int inventory) {
-        this.inventory = inventory;
+    public int getStock() {
+        return stock;
     }
 
     public boolean isActive() {
@@ -108,31 +107,29 @@ public class ProductVariation {
         return createdAt;
     }
 
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
+    public int adjustStock(int delta) {
+        if (delta == 0) {
+            throw new IllegalArgumentException("O ajuste de estoque não pode ser zero");
+        }
+
+        var adjustedStock = (long) stock + delta;
+        if (adjustedStock < 0) {
+            throw new ProductVariationStockUnavailableException();
+        }
+        if (adjustedStock > Integer.MAX_VALUE) {
+            throw new ProductVariationStockCapacityExceededException();
+        }
+
+        stock = (int) adjustedStock;
+        updatedAt = OffsetDateTime.now();
+        return stock;
     }
 
     public OffsetDateTime getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
     public OffsetDateTime getDeletedAt() {
         return deletedAt;
-    }
-
-    public void setDeletedAt(OffsetDateTime deletedAt) {
-        this.deletedAt = deletedAt;
-    }
-
-    public Product getProduct() {
-        return product;
-    }
-
-    public void setProduct(Product product) {
-        this.product = product;
     }
 }

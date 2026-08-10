@@ -1,0 +1,24 @@
+meta {
+  name: Add user profile
+  type: http
+  seq: 100
+  tags: [
+    bruno
+    admin
+  ]
+}
+
+put {
+  url: {{BASE_URL}}/api/v1/admin/users/{{CUSTOMER_ID}}/profiles/CLIENTE
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ADMIN_ACCESS_TOKEN}}
+}
+
+docs {
+  Implemented API endpoint. Replace placeholder IDs and complete the payload before execution.
+}
+
