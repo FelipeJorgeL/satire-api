@@ -20,6 +20,8 @@ server:
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:8080}
+  security:
+    require-secure-transport: ${REQUIRE_SECURE_TRANSPORT:false}
   inventory:
     reservation-expiration: ${STOCK_RESERVATION_EXPIRATION:PT30M}
     reservation-expiration-interval: ${STOCK_RESERVATION_EXPIRATION_INTERVAL:PT1M}
