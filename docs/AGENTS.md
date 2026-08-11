@@ -284,7 +284,7 @@ Localização: `src/test/java/br/com/api/satireapi/domain/customer/internal/`.
 - O estorno só pode ser solicitado para pagamento `APROVADO`; o usuário administrativo é obtido do Bearer token, nunca do corpo da requisição.
 - A operação usa lock pessimista no pagamento e cria uma solicitação persistente em `estornos` como `SOLICITADO`, retornando `202 Accepted`.
 - A mesma chave para o mesmo pagamento retorna a solicitação existente; a mesma chave para outro pagamento e uma segunda solicitação para o mesmo pagamento são conflitos.
-- O schema exige a migration `V2__create_refunds_schema.sql`, com auditoria, valor copiado do pagamento, motivo, usuário, status e chaves únicas.
+- O schema exige a migration `V4__create_refunds_schema.sql`, com auditoria, valor copiado do pagamento, motivo, usuário, status e chaves únicas.
 - A API não simula confirmação financeira e não marca `pagamentos.status` como `ESTORNADO` nesta etapa. A conclusão depende do gateway e de uma confirmação futura.
 
 ### Fora do escopo da Etapa 6

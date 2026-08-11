@@ -13,8 +13,12 @@ spring:
     open-in-view: false
   modulith:
     detection-strategy: explicitly-annotated
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
 
 server:
+  forward-headers-strategy: framework
+  shutdown: graceful
   error:
     include-message: never
 
