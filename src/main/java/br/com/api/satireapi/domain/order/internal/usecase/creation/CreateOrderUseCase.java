@@ -119,7 +119,7 @@ public class CreateOrderUseCase {
         );
         itemRepository.saveAll(cart.items().stream()
             .map(item -> OrderItem.create(
-                order.getId(), item.variationId(), item.sku(), item.productName(),
+                order.getId(), item.variationId(), item.productId(), item.sku(), item.productName(),
                 item.variationName(), item.unitPrice(), item.quantity()
             ))
             .toList());

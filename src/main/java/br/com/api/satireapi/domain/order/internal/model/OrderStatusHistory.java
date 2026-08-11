@@ -50,7 +50,7 @@ public class OrderStatusHistory {
         OrderStatus newStatus,
         String reason
     ) {
-        if (orderId == null || userId == null || newStatus == null
+        if (orderId == null || newStatus == null
             || (previousStatus == null && newStatus != OrderStatus.AGUARDANDO_PAGAMENTO)
             || (previousStatus != null && previousStatus == newStatus)) {
             throw new IllegalArgumentException("Histórico de status inválido");
@@ -70,13 +70,28 @@ public class OrderStatusHistory {
         OrderStatus newStatus,
         String reason
     ) {
+        if (userId == null) {
+            throw new IllegalArgumentException("O usuário do histórico é obrigatório");
+        }
         return new OrderStatusHistory(orderId, userId, previousStatus, newStatus, reason);
     }
 
     public static OrderStatusHistory initial(UUID orderId, UUID userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("O usuário do histórico é obrigatório");
+        }
         return new OrderStatusHistory(
             orderId, userId, null, OrderStatus.AGUARDANDO_PAGAMENTO, null
         );
+    }
+
+    public static OrderStatusHistory recordSystem(
+        UUID orderId,
+        OrderStatus previousStatus,
+        OrderStatus newStatus,
+        String reason
+    ) {
+        return new OrderStatusHistory(orderId, null, previousStatus, newStatus, reason);
     }
 
     public UUID getId() {
