@@ -9,9 +9,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.stereotype.Component;
 
-@Component
 public class RegistrationRateLimiter {
 
     private static final int MAX_ATTEMPTS = 5;

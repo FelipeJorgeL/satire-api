@@ -1,69 +1,47 @@
 package br.com.api.satireapi.domain.customer.internal.usecase.authentication;
 
+import br.com.api.satireapi.domain.customer.RateLimitBucketStore;
+import br.com.api.satireapi.domain.customer.RateLimitKey;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class LoginAttemptTracker {
 
     private static final int MAX_FAILED_ATTEMPTS = 5;
-    private static final int MAX_TRACKED_EMAILS = 10_000;
     private static final Duration LOCKOUT_WINDOW = Duration.ofMinutes(15);
 
+    private final RateLimitBucketStore bucketStore;
     private final Clock clock;
-    private final ConcurrentMap<String, FailureWindow> failuresByEmail = new ConcurrentHashMap<>();
 
-    public LoginAttemptTracker() {
-        this(Clock.systemUTC());
+    @Autowired
+    public LoginAttemptTracker(RateLimitBucketStore bucketStore) {
+        this(bucketStore, Clock.systemUTC());
     }
 
-    LoginAttemptTracker(Clock clock) {
+    LoginAttemptTracker(RateLimitBucketStore bucketStore, Clock clock) {
+        this.bucketStore = bucketStore;
         this.clock = clock;
     }
 
-    public synchronized boolean isBlocked(String email) {
+    public boolean isBlocked(String email, String origin) {
         var now = Instant.now(clock);
-        removeExpired(now);
-        var window = failuresByEmail.get(email);
-        if (window == null) {
-            return false;
-        }
-        if (window.expiredAt(now)) {
-            return false;
-        }
-        return window.count() >= MAX_FAILED_ATTEMPTS;
+        return bucketStore.isBlocked(key(email, origin), MAX_FAILED_ATTEMPTS, LOCKOUT_WINDOW, now);
     }
 
-    public synchronized void recordFailure(String email) {
+    public void recordFailure(String email, String origin) {
         var now = Instant.now(clock);
-        removeExpired(now);
-        if (!failuresByEmail.containsKey(email) && failuresByEmail.size() >= MAX_TRACKED_EMAILS) {
-            return;
-        }
-        failuresByEmail.compute(email, (key, current) -> {
-            if (current == null || current.expiredAt(now)) {
-                return new FailureWindow(1, now);
-            }
-            return new FailureWindow(current.count() + 1, current.start());
-        });
+        bucketStore.recordFailure(key(email, origin), MAX_FAILED_ATTEMPTS, LOCKOUT_WINDOW, now);
     }
 
-    public synchronized void recordSuccess(String email) {
-        failuresByEmail.remove(email);
+    public void recordSuccess(String email, String origin) {
+        bucketStore.clear(key(email, origin));
     }
 
-    private void removeExpired(Instant now) {
-        failuresByEmail.entrySet().removeIf(entry -> entry.getValue().expiredAt(now));
-    }
-
-    private record FailureWindow(int count, Instant start) {
-
-        boolean expiredAt(Instant now) {
-            return start.plus(LOCKOUT_WINDOW).isBefore(now);
-        }
+    private static String key(String email, String origin) {
+        return RateLimitKey.of("login", email + "|" + origin);
     }
 }

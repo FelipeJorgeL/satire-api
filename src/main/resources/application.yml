@@ -13,13 +13,22 @@ spring:
     open-in-view: false
   modulith:
     detection-strategy: explicitly-annotated
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
 
 server:
+  forward-headers-strategy: framework
+  shutdown: graceful
   error:
     include-message: never
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:8080}
+  security:
+    require-secure-transport: ${REQUIRE_SECURE_TRANSPORT:false}
+  inventory:
+    reservation-expiration: ${STOCK_RESERVATION_EXPIRATION:PT30M}
+    reservation-expiration-interval: ${STOCK_RESERVATION_EXPIRATION_INTERVAL:PT1M}
   jwt:
     secret: ${JWT_SECRET}
     expiration: ${JWT_EXPIRATION:3600}

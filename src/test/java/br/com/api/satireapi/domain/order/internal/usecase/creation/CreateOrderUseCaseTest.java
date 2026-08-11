@@ -14,7 +14,7 @@ import br.com.api.satireapi.domain.cart.CartCheckoutSnapshot;
 import br.com.api.satireapi.domain.cart.CartItemSnapshot;
 import br.com.api.satireapi.domain.customer.CustomerAddress;
 import br.com.api.satireapi.domain.customer.CustomerAddressGateway;
-import br.com.api.satireapi.domain.inventory.StockSaleGateway;
+import br.com.api.satireapi.domain.inventory.StockReservationGateway;
 import br.com.api.satireapi.domain.order.OrderStatus;
 import br.com.api.satireapi.domain.order.internal.dto.request.CreateOrderRequest;
 import br.com.api.satireapi.domain.order.internal.model.Order;
@@ -38,7 +38,7 @@ class CreateOrderUseCaseTest {
     private final CartCheckoutGateway cartGateway = mock(CartCheckoutGateway.class);
     private final CustomerAddressGateway addressGateway = mock(CustomerAddressGateway.class);
     private final ShippingQuoteGateway quoteGateway = mock(ShippingQuoteGateway.class);
-    private final StockSaleGateway stockGateway = mock(StockSaleGateway.class);
+    private final StockReservationGateway stockGateway = mock(StockReservationGateway.class);
     private final ShipmentCreationGateway shipmentGateway = mock(ShipmentCreationGateway.class);
     private final OrderRepository orderRepository = mock(OrderRepository.class);
     private final OrderItemRepository itemRepository = mock(OrderItemRepository.class);
@@ -83,7 +83,7 @@ class CreateOrderUseCaseTest {
     }
 
     @Test
-    void createsOrderSellsStockCreatesShipmentAndClearsCartAtomically() {
+    void createsOrderReservesStockCreatesShipmentAndClearsCartAtomically() {
         var customerId = UUID.randomUUID();
         var addressId = UUID.randomUUID();
         var variationId = UUID.randomUUID();
@@ -111,7 +111,7 @@ class CreateOrderUseCaseTest {
 
         assertEquals(OrderStatus.AGUARDANDO_PAGAMENTO, response.status());
         assertEquals(new BigDecimal("94.90"), response.total());
-        verify(stockGateway).registerSale(any(), eq(customerId), any());
+        verify(stockGateway).reserve(any(), eq(customerId), any(), any());
         verify(itemRepository).saveAll(any());
         verify(addressRepository).save(any());
         verify(historyRepository).save(any());

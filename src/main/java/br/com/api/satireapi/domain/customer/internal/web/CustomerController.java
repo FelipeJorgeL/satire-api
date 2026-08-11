@@ -88,8 +88,11 @@ class CustomerController {
     }
 
     @PostMapping("/login")
-    ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authenticateCustomer.execute(request));
+    ResponseEntity<LoginResponse> login(
+        @Valid @RequestBody LoginRequest request,
+        HttpServletRequest httpRequest
+    ) {
+        return ResponseEntity.ok(authenticateCustomer.execute(request, httpRequest.getRemoteAddr()));
     }
 
     @PostMapping("/refresh")

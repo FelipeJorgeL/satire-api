@@ -30,6 +30,8 @@ import br.com.api.satireapi.domain.customer.internal.usecase.authentication.Refr
 
 class AuthenticateCustomerUseCaseTest {
 
+    private static final String ORIGIN = "198.51.100.10";
+
     private final CustomerFinder customerFinder = mock(CustomerFinder.class);
     private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
     private final AccessTokenIssuer accessTokenIssuer = mock(AccessTokenIssuer.class);
@@ -65,7 +67,7 @@ class AuthenticateCustomerUseCaseTest {
             .thenReturn("jwt-token");
         when(accessTokenIssuer.expirationSeconds()).thenReturn(3600L);
 
-        var response = useCase.execute(new LoginRequest(" FELIPE@EXAMPLE.COM ", "safe-password"));
+        var response = useCase.execute(new LoginRequest(" FELIPE@EXAMPLE.COM ", "safe-password"), ORIGIN);
 
         assertEquals("jwt-token", response.accessToken());
         assertEquals("Bearer", response.tokenType());
@@ -73,7 +75,7 @@ class AuthenticateCustomerUseCaseTest {
         assertEquals(43, response.refreshToken().length());
         assertEquals(2592000L, response.refreshExpiresIn());
         assertEquals(List.of("CLIENTE"), response.profiles());
-        verify(loginAttemptTracker).recordSuccess("felipe@example.com");
+        verify(loginAttemptTracker).recordSuccess("felipe@example.com", ORIGIN);
         verify(refreshTokenStore).save(eq(customerId), any(), any());
     }
 
@@ -87,8 +89,8 @@ class AuthenticateCustomerUseCaseTest {
         when(passwordEncoder.matches("wrong-password", "encoded-password")).thenReturn(false);
 
         assertThrows(InvalidCredentialsException.class,
-            () -> useCase.execute(new LoginRequest("felipe@example.com", "wrong-password")));
-        verify(loginAttemptTracker).recordFailure("felipe@example.com");
+            () -> useCase.execute(new LoginRequest("felipe@example.com", "wrong-password"), ORIGIN));
+        verify(loginAttemptTracker).recordFailure("felipe@example.com", ORIGIN);
     }
 
     @Test
@@ -96,20 +98,20 @@ class AuthenticateCustomerUseCaseTest {
         when(customerFinder.findByEmail("ghost@example.com")).thenReturn(Optional.empty());
 
         assertThrows(InvalidCredentialsException.class,
-            () -> useCase.execute(new LoginRequest("ghost@example.com", "any-password")));
+            () -> useCase.execute(new LoginRequest("ghost@example.com", "any-password"), ORIGIN));
 
         // Custo de BCrypt deve ser pago mesmo sem conta: bloqueia enumeração por timing.
         verify(passwordEncoder).matches(eq("any-password"), any());
         // Falha em e-mail inexistente também conta: o 429 não pode virar oráculo de existência.
-        verify(loginAttemptTracker).recordFailure("ghost@example.com");
+        verify(loginAttemptTracker).recordFailure("ghost@example.com", ORIGIN);
     }
 
     @Test
     void blocksLoginWhenAttemptsExceeded() {
-        when(loginAttemptTracker.isBlocked("felipe@example.com")).thenReturn(true);
+        when(loginAttemptTracker.isBlocked("felipe@example.com", ORIGIN)).thenReturn(true);
 
         assertThrows(TooManyLoginAttemptsException.class,
-            () -> useCase.execute(new LoginRequest("felipe@example.com", "safe-password")));
+            () -> useCase.execute(new LoginRequest("felipe@example.com", "safe-password"), ORIGIN));
         verifyNoInteractions(customerFinder);
     }
 
@@ -121,6 +123,6 @@ class AuthenticateCustomerUseCaseTest {
         when(customerFinder.findByEmail("felipe@example.com")).thenReturn(Optional.of(customer));
 
         assertThrows(InvalidCredentialsException.class,
-            () -> useCase.execute(new LoginRequest("felipe@example.com", "safe-password")));
+            () -> useCase.execute(new LoginRequest("felipe@example.com", "safe-password"), ORIGIN));
     }
 }

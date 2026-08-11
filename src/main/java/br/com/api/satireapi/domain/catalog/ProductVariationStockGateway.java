@@ -7,5 +7,7 @@ public interface ProductVariationStockGateway {
 
     Optional<ProductVariationStock> findById(UUID variationId);
 
+    Optional<ProductVariationStock> findByIdForUpdate(UUID variationId);
+
     ProductVariationStockAdjustment adjustStock(UUID variationId, int delta);
 }

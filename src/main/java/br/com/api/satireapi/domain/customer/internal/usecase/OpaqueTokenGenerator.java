@@ -6,9 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.HexFormat;
-import org.springframework.stereotype.Component;
 
-@Component
 class OpaqueTokenGenerator {
 
     private static final SecureRandom RANDOM = new SecureRandom();

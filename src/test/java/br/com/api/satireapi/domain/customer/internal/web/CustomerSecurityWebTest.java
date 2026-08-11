@@ -1,6 +1,7 @@
 package br.com.api.satireapi.domain.customer.internal.web;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -104,7 +105,7 @@ class CustomerSecurityWebTest {
 
     @Test
     void loginBlockedByRateLimitReturnsTooManyRequests() throws Exception {
-        when(authenticateCustomerUseCase.execute(any())).thenThrow(new TooManyLoginAttemptsException());
+        when(authenticateCustomerUseCase.execute(any(), any())).thenThrow(new TooManyLoginAttemptsException());
 
         mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -114,7 +115,7 @@ class CustomerSecurityWebTest {
 
     @Test
     void loginWithValidCredentialsReturnsToken() throws Exception {
-        when(authenticateCustomerUseCase.execute(any())).thenReturn(new LoginResponse("jwt-token", "Bearer", 3600));
+        when(authenticateCustomerUseCase.execute(any(), any())).thenReturn(new LoginResponse("jwt-token", "Bearer", 3600));
 
         mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -124,12 +125,25 @@ class CustomerSecurityWebTest {
 
     @Test
     void loginWithInvalidCredentialsReturnsUnauthorized() throws Exception {
-        when(authenticateCustomerUseCase.execute(any())).thenThrow(new InvalidCredentialsException());
+        when(authenticateCustomerUseCase.execute(any(), any())).thenThrow(new InvalidCredentialsException());
 
         mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new LoginRequest("felipe@example.com", "wrong-password"))))
             .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void loginRejectsPasswordAboveMaximumAtWebBoundaryWithoutInvokingAuthentication() throws Exception {
+        var oversizedPassword = "p".repeat(73);
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(
+                    new LoginRequest("felipe@example.com", oversizedPassword))))
+            .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(authenticateCustomerUseCase);
     }
 
     @Test
