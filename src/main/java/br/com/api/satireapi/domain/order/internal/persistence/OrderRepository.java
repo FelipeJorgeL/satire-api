@@ -15,4 +15,16 @@ public interface OrderRepository extends JpaRepository<Order, UUID>, JpaSpecific
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select orderEntity from Order orderEntity where orderEntity.id = :id")
     Optional<Order> findByIdForUpdate(@Param("id") UUID id);
+
+    Optional<Order> findByIdAndCustomerId(UUID id, UUID customerId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select orderEntity from Order orderEntity
+        where orderEntity.id = :id and orderEntity.customerId = :customerId
+        """)
+    Optional<Order> findByIdAndCustomerIdForUpdate(
+        @Param("id") UUID id,
+        @Param("customerId") UUID customerId
+    );
 }

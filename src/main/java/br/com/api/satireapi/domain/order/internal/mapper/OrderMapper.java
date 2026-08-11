@@ -5,6 +5,11 @@ import br.com.api.satireapi.domain.order.internal.dto.response.AdminOrderDetails
 import br.com.api.satireapi.domain.order.internal.dto.response.AdminOrderItemResponse;
 import br.com.api.satireapi.domain.order.internal.dto.response.AdminOrderListItemResponse;
 import br.com.api.satireapi.domain.order.internal.dto.response.AdminOrderStatusHistoryResponse;
+import br.com.api.satireapi.domain.order.internal.dto.response.CustomerOrderAddressResponse;
+import br.com.api.satireapi.domain.order.internal.dto.response.CustomerOrderDetailsResponse;
+import br.com.api.satireapi.domain.order.internal.dto.response.CustomerOrderItemResponse;
+import br.com.api.satireapi.domain.order.internal.dto.response.CustomerOrderResponse;
+import br.com.api.satireapi.domain.order.internal.dto.response.CustomerOrderStatusHistoryResponse;
 import br.com.api.satireapi.domain.order.internal.model.Order;
 import br.com.api.satireapi.domain.order.internal.model.OrderAddressSnapshot;
 import br.com.api.satireapi.domain.order.internal.model.OrderItem;
@@ -20,6 +25,36 @@ public final class OrderMapper {
         return new AdminOrderListItemResponse(
             order.getId(), order.getCustomerId(), order.getNumber(), order.getStatus(),
             order.getTotal(), order.getCreatedAt(), order.getUpdatedAt()
+        );
+    }
+
+    public static CustomerOrderResponse toCustomerListItem(Order order) {
+        return new CustomerOrderResponse(
+            order.getId(), order.getNumber(), order.getStatus(), order.getSubtotal(),
+            order.getDiscount(), order.getShippingFee(), order.getTotal(), order.getCreatedAt()
+        );
+    }
+
+    public static CustomerOrderDetailsResponse toCustomerDetails(
+        Order order,
+        List<OrderItem> items,
+        OrderAddressSnapshot address
+    ) {
+        return new CustomerOrderDetailsResponse(
+            order.getId(), order.getNumber(), order.getStatus(), order.getSubtotal(),
+            order.getDiscount(), order.getShippingFee(), order.getTotal(),
+            order.getCreatedAt(), order.getUpdatedAt(),
+            items.stream().map(OrderMapper::toCustomerItem).toList(),
+            address == null ? null : toCustomerAddress(address)
+        );
+    }
+
+    public static CustomerOrderStatusHistoryResponse toCustomerHistory(
+        OrderStatusHistory history
+    ) {
+        return new CustomerOrderStatusHistoryResponse(
+            history.getId(), history.getPreviousStatus(), history.getNewStatus(),
+            history.getReason(), history.getCreatedAt()
         );
     }
 
@@ -46,8 +81,23 @@ public final class OrderMapper {
         );
     }
 
+    private static CustomerOrderItemResponse toCustomerItem(OrderItem item) {
+        return new CustomerOrderItemResponse(
+            item.getId(), item.getVariationId(), item.getSku(), item.getProductName(),
+            item.getVariationName(), item.getUnitPrice(), item.getQuantity(), item.getSubtotal()
+        );
+    }
+
     private static AdminOrderAddressResponse toAddress(OrderAddressSnapshot address) {
         return new AdminOrderAddressResponse(
+            address.getId(), address.getRecipient(), address.getPostalCode(), address.getStreet(),
+            address.getNumber(), address.getComplement(), address.getNeighborhood(),
+            address.getCity(), address.getState()
+        );
+    }
+
+    private static CustomerOrderAddressResponse toCustomerAddress(OrderAddressSnapshot address) {
+        return new CustomerOrderAddressResponse(
             address.getId(), address.getRecipient(), address.getPostalCode(), address.getStreet(),
             address.getNumber(), address.getComplement(), address.getNeighborhood(),
             address.getCity(), address.getState()
