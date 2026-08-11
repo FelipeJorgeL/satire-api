@@ -2,12 +2,8 @@ package br.com.api.satireapi.domain.catalog.internal.model;
 
 import br.com.api.satireapi.domain.catalog.ProductVariationStockCapacityExceededException;
 import br.com.api.satireapi.domain.catalog.ProductVariationStockUnavailableException;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -23,7 +19,7 @@ public class ProductVariation {
     @Column(name = "produto_id", nullable = false)
     private UUID productId;
 
-    @Column(name = "sku", nullable = false, unique = true, length = 60)
+    @Column(name = "sku", nullable = false, length = 60, unique = true)
     private String sku;
 
     @Column(name = "nome", nullable = false, length = 120)
@@ -46,6 +42,10 @@ public class ProductVariation {
 
     @Column(name = "excluido_em")
     private OffsetDateTime deletedAt;
+
+    @ManyToOne
+    @JoinColumn(name = "produto_id")
+    private Product product;
 
     protected ProductVariation() {
     }
@@ -97,6 +97,10 @@ public class ProductVariation {
 
     public boolean isActive() {
         return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public OffsetDateTime getCreatedAt() {
