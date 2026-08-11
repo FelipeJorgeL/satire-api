@@ -1,0 +1,23 @@
+meta {
+  name: List favorites
+  type: http
+  seq: 1
+  tags: [
+    store
+    favorites
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/me/favorites?page=0&size=20
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+}
+
+docs {
+  Lists the authenticated customer's favorites with current public product data.
+}

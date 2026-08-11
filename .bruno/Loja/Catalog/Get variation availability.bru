@@ -1,0 +1,20 @@
+meta {
+  name: Get variation availability
+  type: http
+  seq: 8
+  tags: [
+    store
+    catalog
+    inventory
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/products/{{PRODUCT_ID}}/variations/{{VARIATION_ID}}/availability
+  body: none
+  auth: none
+}
+
+docs {
+  Public stock availability for an active variation belonging to the product.
+}

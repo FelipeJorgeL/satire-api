@@ -1,0 +1,26 @@
+meta {
+  name: List products
+  type: http
+  seq: 3
+  tags: [
+    store
+    catalog
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/products?page=0&size=20&sortBy=createdAt&direction=desc
+  body: none
+  auth: none
+}
+
+script:post-response {
+  if (res.status === 200 && res.body.content && res.body.content.length > 0) {
+    bru.setEnvVar("PRODUCT_ID", res.body.content[0].id);
+    bru.setEnvVar("PRODUCT_SLUG", res.body.content[0].slug);
+  }
+}
+
+docs {
+  Public paginated catalog. Saves the first product ID and slug for subsequent requests.
+}

@@ -18,6 +18,23 @@ public interface OrderRepository extends JpaRepository<Order, UUID>, JpaSpecific
 
     Optional<Order> findByIdAndCustomerId(UUID id, UUID customerId);
 
+    boolean existsByIdAndCustomerId(UUID id, UUID customerId);
+
+    @Query(value = """
+        SELECT order_entity.id
+        FROM pedidos order_entity
+        JOIN itens_pedidos item ON item.pedido_id = order_entity.id
+        WHERE order_entity.usuario_id = :customerId
+          AND order_entity.status = 'ENTREGUE'
+          AND item.produto_id = :productId
+        ORDER BY order_entity.atualizado_em DESC, order_entity.id
+        LIMIT 1
+        """, nativeQuery = true)
+    Optional<UUID> findDeliveredPurchaseOrderId(
+        @Param("customerId") UUID customerId,
+        @Param("productId") UUID productId
+    );
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         select orderEntity from Order orderEntity

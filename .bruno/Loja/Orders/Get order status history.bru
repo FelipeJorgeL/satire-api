@@ -1,0 +1,23 @@
+meta {
+  name: Get order status history
+  type: http
+  seq: 4
+  tags: [
+    store
+    orders
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/orders/{{ORDER_ID}}/status-history
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+}
+
+docs {
+  Returns the status history only when the order belongs to the authenticated customer.
+}

@@ -1,0 +1,29 @@
+meta {
+  name: List orders
+  type: http
+  seq: 2
+  tags: [
+    store
+    orders
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/orders?page=0&size=20&sortBy=createdAt&direction=desc
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+}
+
+script:post-response {
+  if (res.status === 200 && res.body.content && res.body.content.length > 0) {
+    bru.setEnvVar("ORDER_ID", res.body.content[0].id);
+  }
+}
+
+docs {
+  Lists only the authenticated customer's orders and saves the first ORDER_ID.
+}

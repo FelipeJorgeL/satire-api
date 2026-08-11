@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -54,6 +55,29 @@ public class Payment {
 
     public boolean isRefundable() {
         return status == PaymentStatus.APROVADO;
+    }
+
+    public void applyGatewayUpdate(PaymentStatus targetStatus, String transactionId) {
+        if (targetStatus == null || targetStatus == PaymentStatus.PENDENTE) {
+            throw new IllegalArgumentException("Status de pagamento do webhook é inválido");
+        }
+        if (transactionId == null || transactionId.isBlank() || transactionId.length() > 255) {
+            throw new IllegalArgumentException("Identificador da transação é inválido");
+        }
+        var normalizedTransactionId = transactionId.trim();
+        if (status == targetStatus) {
+            if (!Objects.equals(gatewayTransactionId, normalizedTransactionId)) {
+                throw new InvalidPaymentStatusTransitionException();
+            }
+            return;
+        }
+        if (status != PaymentStatus.PENDENTE) {
+            throw new InvalidPaymentStatusTransitionException();
+        }
+        status = targetStatus;
+        gatewayTransactionId = normalizedTransactionId;
+        paidAt = targetStatus == PaymentStatus.APROVADO ? OffsetDateTime.now() : null;
+        updatedAt = OffsetDateTime.now();
     }
 
     public UUID getId() {

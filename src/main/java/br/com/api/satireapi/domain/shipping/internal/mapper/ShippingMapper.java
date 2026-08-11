@@ -16,4 +16,5 @@ public final class ShippingMapper {
             shipment.getCreatedAt(), shipment.getUpdatedAt()
         );
     }
+
 }

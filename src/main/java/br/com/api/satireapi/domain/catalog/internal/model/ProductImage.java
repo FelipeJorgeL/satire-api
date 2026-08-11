@@ -1,7 +1,11 @@
 package br.com.api.satireapi.domain.catalog.internal.model;
 
-import jakarta.persistence.*;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -33,10 +37,6 @@ public class ProductImage {
 
     @Column(name = "criado_em", nullable = false)
     private OffsetDateTime createdAt;
-
-    @ManyToOne
-    @JoinColumn(name = "produto_id")
-    private Product product;
 
     protected ProductImage() {
     }

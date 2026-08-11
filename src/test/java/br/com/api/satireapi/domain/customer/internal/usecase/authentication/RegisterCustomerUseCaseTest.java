@@ -11,10 +11,10 @@ import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import br.com.api.satireapi.domain.customer.ConfirmationEmailOutboxStore;
 import br.com.api.satireapi.domain.customer.ConfirmationLinkProtector;
+import br.com.api.satireapi.domain.customer.PasswordHasher;
 import br.com.api.satireapi.domain.customer.internal.dto.request.RegisterCustomerRequest;
 import br.com.api.satireapi.domain.customer.internal.usecase.authentication.RegisterCustomerUseCase;
 import br.com.api.satireapi.domain.customer.internal.usecase.CustomerRegistry;
@@ -27,7 +27,7 @@ class RegisterCustomerUseCaseTest {
 
     private final CustomerRegistry customerRegistry = mock(CustomerRegistry.class);
     private final ProfileFinder profileFinder = mock(ProfileFinder.class);
-    private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
+    private final PasswordHasher passwordHasher = mock(PasswordHasher.class);
     private final EmailConfirmationStore emailConfirmationStore = mock(EmailConfirmationStore.class);
     private final OpaqueTokenGenerator tokenGenerator = new OpaqueTokenGenerator();
     private final ConfirmationEmailOutboxStore outboxStore = mock(ConfirmationEmailOutboxStore.class);
@@ -35,7 +35,7 @@ class RegisterCustomerUseCaseTest {
     private final RegisterCustomerUseCase useCase = new RegisterCustomerUseCase(
         customerRegistry,
         profileFinder,
-        passwordEncoder,
+        passwordHasher,
         emailConfirmationStore,
         tokenGenerator,
         outboxStore,
@@ -58,7 +58,7 @@ class RegisterCustomerUseCaseTest {
         when(customerRegistry.existsByEmail("felipe@example.com")).thenReturn(false);
         when(profileFinder.findByName("CLIENTE")).thenReturn(Optional.of(profile));
         when(profile.getName()).thenReturn("CLIENTE");
-        when(passwordEncoder.encode("safe-password")).thenReturn("encoded-password");
+        when(passwordHasher.encode("safe-password")).thenReturn("encoded-password");
         when(linkProtector.protect(any())).thenReturn("protected-link");
         when(customerRegistry.save(any(Customer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -66,7 +66,7 @@ class RegisterCustomerUseCaseTest {
 
         assertEquals("Felipe Jorge", response.name());
         assertEquals("felipe@example.com", response.email());
-        verify(passwordEncoder).encode("safe-password");
+        verify(passwordHasher).encode("safe-password");
         verify(customerRegistry).save(any(Customer.class));
         verify(emailConfirmationStore).save(any(), any(), any());
         verify(outboxStore).enqueue(any(), eq("felipe@example.com"), eq("protected-link"));

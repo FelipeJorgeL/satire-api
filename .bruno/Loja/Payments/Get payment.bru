@@ -1,0 +1,23 @@
+meta {
+  name: Get payment
+  type: http
+  seq: 3
+  tags: [
+    store
+    payments
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/payments/{{PAYMENT_ID}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+}
+
+docs {
+  Returns a payment only when its order belongs to the authenticated customer.
+}

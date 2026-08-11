@@ -24,18 +24,24 @@ server:
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:8080}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   security:
     require-secure-transport: ${REQUIRE_SECURE_TRANSPORT:false}
   inventory:
     reservation-expiration: ${STOCK_RESERVATION_EXPIRATION:PT30M}
     reservation-expiration-interval: ${STOCK_RESERVATION_EXPIRATION_INTERVAL:PT1M}
+  payment:
+    webhook:
+      secret: ${PAYMENT_WEBHOOK_SECRET:}
+      tolerance: ${PAYMENT_WEBHOOK_TOLERANCE:PT5M}
   jwt:
     secret: ${JWT_SECRET}
     expiration: ${JWT_EXPIRATION:3600}
     refresh-expiration: ${JWT_REFRESH_EXPIRATION:2592000}
   mail:
     sendgrid-api-key: ${SENDGRID_API_KEY:}
-    from: ${MAIL_FROM:satire.noreply@gmail.com}
+    from: ${MAIL_FROM:noreply@example.com}
     confirmation-expiration: ${EMAIL_CONFIRMATION_EXPIRATION:86400}
     outbox:
       max-attempts: ${MAIL_OUTBOX_MAX_ATTEMPTS:5}

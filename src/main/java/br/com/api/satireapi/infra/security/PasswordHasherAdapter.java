@@ -1,6 +1,6 @@
 package br.com.api.satireapi.infra.security;
 
-import br.com.api.satireapi.domain.customer.internal.usecase.PasswordHasher;
+import br.com.api.satireapi.domain.customer.PasswordHasher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 

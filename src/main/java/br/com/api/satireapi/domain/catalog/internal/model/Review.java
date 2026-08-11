@@ -1,7 +1,11 @@
 package br.com.api.satireapi.domain.catalog.internal.model;
 
-import jakarta.persistence.*;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -14,7 +18,7 @@ public class Review {
     private UUID id;
 
     @Column(name = "usuario_id", nullable = false)
-    private UUID userId;
+    private UUID customerId;
 
     @Column(name = "produto_id", nullable = false)
     private UUID productId;
@@ -23,7 +27,7 @@ public class Review {
     private UUID orderId;
 
     @Column(name = "nota", nullable = false)
-    private Short rating;
+    private short rating;
 
     @Column(name = "comentario")
     private String comment;
@@ -34,82 +38,30 @@ public class Review {
     @Column(name = "atualizado_em", nullable = false)
     private OffsetDateTime updatedAt;
 
-    public Review() {
-    }
-
-    public Review(UUID id, UUID userId, UUID productId, UUID orderId, Short rating,
-                  String comment, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
-        this.id = id;
-        this.userId = userId;
-        this.productId = productId;
-        this.orderId = orderId;
-        this.rating = rating;
-        this.comment = comment;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
+    protected Review() {
     }
 
     public UUID getId() {
         return id;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public void setUserId(UUID userId) {
-        this.userId = userId;
-    }
-
     public UUID getProductId() {
         return productId;
     }
 
-    public void setProductId(UUID productId) {
-        this.productId = productId;
-    }
-
-    public UUID getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(UUID orderId) {
-        this.orderId = orderId;
-    }
-
-    public Short getRating() {
+    public short getRating() {
         return rating;
-    }
-
-    public void setRating(Short rating) {
-        this.rating = rating;
     }
 
     public String getComment() {
         return comment;
     }
 
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
     public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
     public OffsetDateTime getUpdatedAt() {
         return updatedAt;
-    }
-
-    public void setUpdatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 }

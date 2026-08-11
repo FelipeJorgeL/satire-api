@@ -1,6 +1,7 @@
 package br.com.api.satireapi.domain.customer.internal.usecase.authentication;
 
 import br.com.api.satireapi.domain.customer.AccessTokenIssuer;
+import br.com.api.satireapi.domain.customer.PasswordHasher;
 import br.com.api.satireapi.domain.customer.internal.dto.request.LoginRequest;
 import br.com.api.satireapi.domain.customer.internal.dto.response.LoginResponse;
 import br.com.api.satireapi.domain.customer.internal.model.Customer;
@@ -8,7 +9,6 @@ import br.com.api.satireapi.domain.customer.internal.model.Profile;
 import br.com.api.satireapi.domain.customer.internal.usecase.CustomerFinder;
 import java.time.Instant;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +18,7 @@ public class AuthenticateCustomerUseCase {
     private static final String TIMING_EQUALIZER_PASSWORD = "timing-equalizer";
 
     private final CustomerFinder customerFinder;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordHasher passwordHasher;
     private final AccessTokenIssuer accessTokenIssuer;
     private final LoginAttemptTracker loginAttemptTracker;
     private final RefreshTokenStore refreshTokenStore;
@@ -28,7 +28,7 @@ public class AuthenticateCustomerUseCase {
 
     public AuthenticateCustomerUseCase(
         CustomerFinder customerFinder,
-        PasswordEncoder passwordEncoder,
+        PasswordHasher passwordHasher,
         AccessTokenIssuer accessTokenIssuer,
         LoginAttemptTracker loginAttemptTracker,
         RefreshTokenStore refreshTokenStore,
@@ -36,7 +36,7 @@ public class AuthenticateCustomerUseCase {
         @Value("${app.jwt.refresh-expiration}") long refreshExpirationSeconds
     ) {
         this.customerFinder = customerFinder;
-        this.passwordEncoder = passwordEncoder;
+        this.passwordHasher = passwordHasher;
         this.accessTokenIssuer = accessTokenIssuer;
         this.loginAttemptTracker = loginAttemptTracker;
         this.refreshTokenStore = refreshTokenStore;
@@ -44,7 +44,7 @@ public class AuthenticateCustomerUseCase {
         this.refreshExpirationSeconds = refreshExpirationSeconds;
         // Hash sacrificial: paga o custo de BCrypt mesmo quando o e-mail não existe,
         // impedindo enumeração de contas pela diferença de tempo de resposta.
-        this.timingEqualizerHash = passwordEncoder.encode(TIMING_EQUALIZER_PASSWORD);
+        this.timingEqualizerHash = passwordHasher.encode(TIMING_EQUALIZER_PASSWORD);
     }
 
     @Transactional
@@ -56,7 +56,7 @@ public class AuthenticateCustomerUseCase {
 
         var customer = customerFinder.findByEmail(normalizedEmail).filter(Customer::isActive);
         var passwordHash = customer.map(Customer::getPasswordHash).orElse(timingEqualizerHash);
-        var passwordMatches = passwordEncoder.matches(request.password(), passwordHash);
+        var passwordMatches = passwordHasher.matches(request.password(), passwordHash);
 
         if (customer.isEmpty() || !passwordMatches) {
             loginAttemptTracker.recordFailure(normalizedEmail, origin);

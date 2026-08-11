@@ -24,6 +24,9 @@ public class OrderItem {
     @Column(name = "variacao_produto_id")
     private UUID variationId;
 
+    @Column(name = "produto_id")
+    private UUID productId;
+
     @Column(name = "sku", nullable = false, length = 60)
     private String sku;
 
@@ -54,18 +57,20 @@ public class OrderItem {
     private OrderItem(
         UUID orderId,
         UUID variationId,
+        UUID productId,
         String sku,
         String productName,
         String variationName,
         BigDecimal unitPrice,
         int quantity
     ) {
-        if (orderId == null || variationId == null || quantity <= 0
+        if (orderId == null || variationId == null || productId == null || quantity <= 0
             || unitPrice == null || unitPrice.signum() < 0) {
             throw new IllegalArgumentException("Invalid order item");
         }
         this.orderId = orderId;
         this.variationId = variationId;
+        this.productId = productId;
         this.sku = requireText(sku);
         this.productName = requireText(productName);
         this.variationName = requireText(variationName);
@@ -79,6 +84,7 @@ public class OrderItem {
     public static OrderItem create(
         UUID orderId,
         UUID variationId,
+        UUID productId,
         String sku,
         String productName,
         String variationName,
@@ -86,7 +92,8 @@ public class OrderItem {
         int quantity
     ) {
         return new OrderItem(
-            orderId, variationId, sku, productName, variationName, unitPrice, quantity
+            orderId, variationId, productId, sku, productName, variationName,
+            unitPrice, quantity
         );
     }
 
@@ -107,6 +114,10 @@ public class OrderItem {
 
     public UUID getVariationId() {
         return variationId;
+    }
+
+    public UUID getProductId() {
+        return productId;
     }
 
     public String getSku() {

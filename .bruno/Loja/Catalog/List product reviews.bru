@@ -1,0 +1,20 @@
+meta {
+  name: List product reviews
+  type: http
+  seq: 9
+  tags: [
+    store
+    catalog
+    reviews
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/products/{{PRODUCT_ID}}/reviews?page=0&size=20
+  body: none
+  auth: none
+}
+
+docs {
+  Public paginated reviews for an active product. Customer identity is not exposed.
+}

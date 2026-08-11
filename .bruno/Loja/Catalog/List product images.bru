@@ -1,0 +1,19 @@
+meta {
+  name: List product images
+  type: http
+  seq: 7
+  tags: [
+    store
+    catalog
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/products/{{PRODUCT_ID}}/images
+  body: none
+  auth: none
+}
+
+docs {
+  Lists product image URLs and accessibility metadata.
+}

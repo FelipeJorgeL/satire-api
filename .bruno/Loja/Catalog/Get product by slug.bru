@@ -1,0 +1,19 @@
+meta {
+  name: Get product by slug
+  type: http
+  seq: 5
+  tags: [
+    store
+    catalog
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/products/slug/{{PRODUCT_SLUG}}
+  body: none
+  auth: none
+}
+
+docs {
+  Public lookup by normalized product slug.
+}

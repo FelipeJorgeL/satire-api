@@ -1,0 +1,23 @@
+meta {
+  name: Remove favorite
+  type: http
+  seq: 3
+  tags: [
+    store
+    favorites
+  ]
+}
+
+delete {
+  url: {{BASE_URL}}/api/v1/me/favorites/{{PRODUCT_ID}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+}
+
+docs {
+  Idempotently removes the product from the authenticated customer's favorites.
+}

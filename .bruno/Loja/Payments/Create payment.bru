@@ -1,0 +1,35 @@
+meta {
+  name: Create payment
+  type: http
+  seq: 1
+  tags: [
+    store
+    payments
+  ]
+}
+
+post {
+  url: {{BASE_URL}}/api/v1/orders/{{ORDER_ID}}/payments
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+  Idempotency-Key: {{IDEMPOTENCY_KEY}}
+  Content-Type: application/json
+}
+
+body:json {
+  {"method":"PIX"}
+}
+
+script:post-response {
+  if ((res.status === 200 || res.status === 201) && res.body.id) {
+    bru.setEnvVar("PAYMENT_ID", res.body.id);
+  }
+}
+
+docs {
+  Starts a simulated payment and saves PAYMENT_ID. Reusing the same key and payload is safe.
+}

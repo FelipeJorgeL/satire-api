@@ -1,0 +1,23 @@
+meta {
+  name: Add favorite
+  type: http
+  seq: 2
+  tags: [
+    store
+    favorites
+  ]
+}
+
+put {
+  url: {{BASE_URL}}/api/v1/me/favorites/{{PRODUCT_ID}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+}
+
+docs {
+  Idempotently adds an active product to the authenticated customer's favorites.
+}
