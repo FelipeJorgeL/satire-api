@@ -20,6 +20,9 @@ server:
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:8080}
+  inventory:
+    reservation-expiration: ${STOCK_RESERVATION_EXPIRATION:PT30M}
+    reservation-expiration-interval: ${STOCK_RESERVATION_EXPIRATION_INTERVAL:PT1M}
   jwt:
     secret: ${JWT_SECRET}
     expiration: ${JWT_EXPIRATION:3600}

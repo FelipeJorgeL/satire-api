@@ -110,6 +110,36 @@ public class StockMovement {
         );
     }
 
+    public static StockMovement reservation(
+        UUID variationId,
+        UUID orderId,
+        UUID customerId,
+        int quantity,
+        int previousStock,
+        int newStock,
+        String observation
+    ) {
+        return new StockMovement(
+            variationId, customerId, orderId, StockMovementType.RESERVA,
+            quantity, previousStock, newStock, observation
+        );
+    }
+
+    public static StockMovement release(
+        UUID variationId,
+        UUID orderId,
+        UUID customerId,
+        int quantity,
+        int previousStock,
+        int newStock,
+        String observation
+    ) {
+        return new StockMovement(
+            variationId, customerId, orderId, StockMovementType.LIBERACAO,
+            quantity, previousStock, newStock, observation
+        );
+    }
+
     private static boolean isConsistent(
         StockMovementType type,
         int quantity,
@@ -118,6 +148,9 @@ public class StockMovement {
     ) {
         if (previousStock < 0 || newStock < 0) {
             return false;
+        }
+        if (type == StockMovementType.VENDA && newStock == previousStock) {
+            return true;
         }
         return (long) newStock == (long) previousStock + type.delta(quantity);
     }

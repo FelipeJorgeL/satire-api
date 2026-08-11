@@ -30,6 +30,18 @@ class JpaProductVariationStockGateway implements ProductVariationStockGateway {
     }
 
     @Override
+    public Optional<ProductVariationStock> findByIdForUpdate(UUID variationId) {
+        return repository.findByIdForStockUpdate(variationId).map(variation -> new ProductVariationStock(
+            variation.getId(),
+            variation.getProductId(),
+            variation.getSku(),
+            variation.getName(),
+            variation.getStock(),
+            variation.isActive()
+        ));
+    }
+
+    @Override
     public ProductVariationStockAdjustment adjustStock(UUID variationId, int delta) {
         var variation = repository.findByIdForStockUpdate(variationId)
             .orElseThrow(ProductVariationNotFoundException::new);

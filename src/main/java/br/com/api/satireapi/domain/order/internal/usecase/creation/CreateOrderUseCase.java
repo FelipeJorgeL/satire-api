@@ -4,8 +4,8 @@ import br.com.api.satireapi.domain.cart.CartCheckoutGateway;
 import br.com.api.satireapi.domain.cart.CartCheckoutSnapshot;
 import br.com.api.satireapi.domain.customer.CustomerAddress;
 import br.com.api.satireapi.domain.customer.CustomerAddressGateway;
-import br.com.api.satireapi.domain.inventory.StockSaleGateway;
-import br.com.api.satireapi.domain.inventory.StockSaleLine;
+import br.com.api.satireapi.domain.inventory.StockReservationGateway;
+import br.com.api.satireapi.domain.inventory.StockReservationLine;
 import br.com.api.satireapi.domain.order.internal.dto.request.CreateOrderRequest;
 import br.com.api.satireapi.domain.order.internal.dto.response.CustomerOrderResponse;
 import br.com.api.satireapi.domain.order.internal.model.Order;
@@ -20,7 +20,11 @@ import br.com.api.satireapi.domain.shipping.ShipmentCreationGateway;
 import br.com.api.satireapi.domain.shipping.ShippingQuoteGateway;
 import br.com.api.satireapi.domain.shipping.ShippingQuoteRequest;
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +34,7 @@ public class CreateOrderUseCase {
     private final CartCheckoutGateway cartCheckoutGateway;
     private final CustomerAddressGateway customerAddressGateway;
     private final ShippingQuoteGateway shippingQuoteGateway;
-    private final StockSaleGateway stockSaleGateway;
+    private final StockReservationGateway stockReservationGateway;
     private final ShipmentCreationGateway shipmentCreationGateway;
     private final OrderRepository orderRepository;
     private final OrderItemRepository itemRepository;
@@ -42,7 +46,7 @@ public class CreateOrderUseCase {
         CartCheckoutGateway cartCheckoutGateway,
         CustomerAddressGateway customerAddressGateway,
         ShippingQuoteGateway shippingQuoteGateway,
-        StockSaleGateway stockSaleGateway,
+        StockReservationGateway stockReservationGateway,
         ShipmentCreationGateway shipmentCreationGateway,
         OrderRepository orderRepository,
         OrderItemRepository itemRepository,
@@ -50,17 +54,45 @@ public class CreateOrderUseCase {
         OrderStatusHistoryRepository historyRepository,
         OrderNumberGenerator orderNumberGenerator
     ) {
+        this(
+            cartCheckoutGateway, customerAddressGateway, shippingQuoteGateway,
+            stockReservationGateway, shipmentCreationGateway, orderRepository,
+            itemRepository, addressRepository, historyRepository, orderNumberGenerator,
+            Duration.ofMinutes(30)
+        );
+    }
+
+    @Autowired
+    public CreateOrderUseCase(
+        CartCheckoutGateway cartCheckoutGateway,
+        CustomerAddressGateway customerAddressGateway,
+        ShippingQuoteGateway shippingQuoteGateway,
+        StockReservationGateway stockReservationGateway,
+        ShipmentCreationGateway shipmentCreationGateway,
+        OrderRepository orderRepository,
+        OrderItemRepository itemRepository,
+        OrderAddressSnapshotRepository addressRepository,
+        OrderStatusHistoryRepository historyRepository,
+        OrderNumberGenerator orderNumberGenerator,
+        @Value("${app.inventory.reservation-expiration:PT30M}") Duration reservationExpiration
+    ) {
         this.cartCheckoutGateway = cartCheckoutGateway;
         this.customerAddressGateway = customerAddressGateway;
         this.shippingQuoteGateway = shippingQuoteGateway;
-        this.stockSaleGateway = stockSaleGateway;
+        this.stockReservationGateway = stockReservationGateway;
         this.shipmentCreationGateway = shipmentCreationGateway;
         this.orderRepository = orderRepository;
         this.itemRepository = itemRepository;
         this.addressRepository = addressRepository;
         this.historyRepository = historyRepository;
         this.orderNumberGenerator = orderNumberGenerator;
+        if (reservationExpiration.isNegative() || reservationExpiration.isZero()) {
+            throw new IllegalArgumentException("Reservation expiration must be positive");
+        }
+        this.reservationExpiration = reservationExpiration;
     }
+
+    private final Duration reservationExpiration;
 
     @Transactional
     public CustomerOrderResponse execute(UUID customerId, CreateOrderRequest request) {
@@ -79,9 +111,12 @@ public class CreateOrderUseCase {
             customerId, orderNumberGenerator.generate(), subtotal, quote.fee()
         );
         orderRepository.saveAndFlush(order);
-        stockSaleGateway.registerSale(order.getId(), customerId, cart.items().stream()
-            .map(item -> new StockSaleLine(item.variationId(), item.quantity()))
-            .toList());
+        stockReservationGateway.reserve(
+            order.getId(), customerId, cart.items().stream()
+                .map(item -> new StockReservationLine(item.variationId(), item.quantity()))
+                .toList(),
+            Instant.now().plus(reservationExpiration)
+        );
         itemRepository.saveAll(cart.items().stream()
             .map(item -> OrderItem.create(
                 order.getId(), item.variationId(), item.sku(), item.productName(),
