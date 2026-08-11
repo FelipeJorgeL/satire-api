@@ -1,5 +1,6 @@
 package br.com.api.satireapi.domain.customer.internal.usecase;
 
+import br.com.api.satireapi.domain.customer.PasswordHasher;
 import java.time.Instant;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;

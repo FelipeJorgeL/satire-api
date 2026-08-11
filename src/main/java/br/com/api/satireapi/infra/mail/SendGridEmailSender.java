@@ -22,7 +22,7 @@ class SendGridEmailSender implements ConfirmationEmailSender {
 
     SendGridEmailSender(
         @Value("${app.mail.sendgrid-api-key:}") String apiKey,
-        @Value("${app.mail.from:satire.noreply@gmail.com}") String fromEmail
+        @Value("${app.mail.from:noreply@example.com}") String fromEmail
     ) {
         this.apiKey = apiKey;
         this.fromEmail = fromEmail;
