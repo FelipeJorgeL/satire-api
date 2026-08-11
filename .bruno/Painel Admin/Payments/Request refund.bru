@@ -16,13 +16,15 @@ post {
 
 headers {
   Authorization: Bearer {{ADMIN_ACCESS_TOKEN}}
+  Idempotency-Key: bruno-refund-0001
   Content-Type: application/json
 }
 
 body:json {
+  {"reason":"Solicitação administrativa de estorno"}
 }
 
 docs {
-  Implemented API endpoint. Replace placeholder IDs and complete the payload before execution.
+  Requests a simulated refund for an approved payment. No real financial refund is executed.
 }
 

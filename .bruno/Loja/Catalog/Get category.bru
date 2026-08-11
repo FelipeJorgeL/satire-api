@@ -1,0 +1,19 @@
+meta {
+  name: Get category
+  type: http
+  seq: 2
+  tags: [
+    store
+    catalog
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/categories/{{CATEGORY_ID}}
+  body: none
+  auth: none
+}
+
+docs {
+  Public details for an active category.
+}

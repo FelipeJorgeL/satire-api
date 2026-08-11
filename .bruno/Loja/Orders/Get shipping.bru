@@ -1,0 +1,24 @@
+meta {
+  name: Get shipping
+  type: http
+  seq: 6
+  tags: [
+    store
+    orders
+    shipping
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/orders/{{ORDER_ID}}/shipping
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+}
+
+docs {
+  Returns shipment and tracking data only for an order owned by the customer.
+}

@@ -1,0 +1,25 @@
+meta {
+  name: List categories
+  type: http
+  seq: 1
+  tags: [
+    store
+    catalog
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/categories?page=0&size=20&sortBy=name&direction=asc
+  body: none
+  auth: none
+}
+
+script:post-response {
+  if (res.status === 200 && res.body.content && res.body.content.length > 0) {
+    bru.setEnvVar("CATEGORY_ID", res.body.content[0].id);
+  }
+}
+
+docs {
+  Public paginated list containing only active categories.
+}

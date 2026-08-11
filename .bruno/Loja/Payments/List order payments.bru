@@ -1,0 +1,23 @@
+meta {
+  name: List order payments
+  type: http
+  seq: 2
+  tags: [
+    store
+    payments
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/orders/{{ORDER_ID}}/payments
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+}
+
+docs {
+  Lists simulated payment attempts for an order owned by the customer.
+}

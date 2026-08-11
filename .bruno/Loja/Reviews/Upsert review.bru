@@ -1,0 +1,31 @@
+meta {
+  name: Upsert review
+  type: http
+  seq: 1
+  tags: [
+    store
+    reviews
+  ]
+}
+
+put {
+  url: {{BASE_URL}}/api/v1/me/reviews/{{PRODUCT_ID}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "rating": 5,
+    "comment": "Excelente produto"
+  }
+}
+
+docs {
+  Creates or updates the customer's review. Requires a delivered order containing the product.
+}

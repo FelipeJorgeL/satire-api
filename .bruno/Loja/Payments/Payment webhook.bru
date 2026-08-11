@@ -1,0 +1,35 @@
+meta {
+  name: Payment webhook
+  type: http
+  seq: 4
+  tags: [
+    external
+    payments
+    webhook
+  ]
+}
+
+post {
+  url: {{BASE_URL}}/api/v1/payments/{{PAYMENT_ID}}/webhook
+  body: json
+  auth: none
+}
+
+headers {
+  X-Webhook-Event-Id: {{WEBHOOK_EVENT_ID}}
+  X-Webhook-Timestamp: {{WEBHOOK_TIMESTAMP}}
+  X-Webhook-Signature: {{WEBHOOK_SIGNATURE}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "status": "APROVADO",
+    "gatewayTransactionId": "transaction-bruno-0001"
+  }
+}
+
+docs {
+  External simulated-gateway callback. Generate WEBHOOK_SIGNATURE as Base64URL HMAC-SHA256
+  over timestamp.eventId.rawPayload using PAYMENT_WEBHOOK_SECRET. Timestamp tolerance is five minutes.
+}

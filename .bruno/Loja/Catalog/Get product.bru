@@ -1,0 +1,19 @@
+meta {
+  name: Get product
+  type: http
+  seq: 4
+  tags: [
+    store
+    catalog
+  ]
+}
+
+get {
+  url: {{BASE_URL}}/api/v1/products/{{PRODUCT_ID}}
+  body: none
+  auth: none
+}
+
+docs {
+  Public details for an active product, including active variations and images.
+}

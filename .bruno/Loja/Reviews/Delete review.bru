@@ -1,0 +1,23 @@
+meta {
+  name: Delete review
+  type: http
+  seq: 2
+  tags: [
+    store
+    reviews
+  ]
+}
+
+delete {
+  url: {{BASE_URL}}/api/v1/me/reviews/{{PRODUCT_ID}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{ACCESS_TOKEN}}
+}
+
+docs {
+  Idempotently removes the authenticated customer's review.
+}
