@@ -1,6 +1,8 @@
 package br.com.api.satireapi.domain.catalog.internal.persistence;
 
 import br.com.api.satireapi.domain.catalog.internal.model.Product;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import jakarta.persistence.LockModeType;
@@ -15,6 +17,12 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
     boolean existsBySlug(String slug);
 
     boolean existsBySlugAndIdNot(String slug, UUID id);
+
+    Optional<Product> findByIdAndActiveTrue(UUID id);
+
+    Optional<Product> findBySlugAndActiveTrue(String slug);
+
+    List<Product> findAllByIdInAndActiveTrue(Collection<UUID> ids);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select product from Product product where product.id = :id")

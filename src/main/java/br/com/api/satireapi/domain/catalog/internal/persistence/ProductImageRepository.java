@@ -2,6 +2,7 @@ package br.com.api.satireapi.domain.catalog.internal.persistence;
 
 import br.com.api.satireapi.domain.catalog.internal.model.ProductImage;
 import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,6 +10,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ProductImageRepository extends JpaRepository<ProductImage, UUID> {
 
     List<ProductImage> findAllByProductIdOrderByDisplayOrderAsc(UUID productId);
+
+    List<ProductImage> findAllByProductIdInOrderByProductIdAscDisplayOrderAsc(
+        Collection<UUID> productIds
+    );
 
     Optional<ProductImage> findByIdAndProductId(UUID id, UUID productId);
 

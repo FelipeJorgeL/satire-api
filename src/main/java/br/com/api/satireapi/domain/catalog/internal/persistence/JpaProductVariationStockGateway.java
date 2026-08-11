@@ -19,26 +19,33 @@ class JpaProductVariationStockGateway implements ProductVariationStockGateway {
 
     @Override
     public Optional<ProductVariationStock> findById(UUID variationId) {
-        return repository.findById(variationId).map(variation -> new ProductVariationStock(
-            variation.getId(),
-            variation.getProductId(),
-            variation.getSku(),
-            variation.getName(),
-            variation.getStock(),
-            variation.isActive()
-        ));
+        return repository.findById(variationId).map(this::toStock);
+    }
+
+    @Override
+    public Optional<ProductVariationStock> findPublicAvailability(
+        UUID productId,
+        UUID variationId
+    ) {
+        return repository.findPublicAvailability(productId, variationId).map(this::toStock);
     }
 
     @Override
     public Optional<ProductVariationStock> findByIdForUpdate(UUID variationId) {
-        return repository.findByIdForStockUpdate(variationId).map(variation -> new ProductVariationStock(
+        return repository.findByIdForStockUpdate(variationId).map(this::toStock);
+    }
+
+    private ProductVariationStock toStock(
+        br.com.api.satireapi.domain.catalog.internal.model.ProductVariation variation
+    ) {
+        return new ProductVariationStock(
             variation.getId(),
             variation.getProductId(),
             variation.getSku(),
             variation.getName(),
             variation.getStock(),
             variation.isActive()
-        ));
+        );
     }
 
     @Override

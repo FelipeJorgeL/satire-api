@@ -1,9 +1,12 @@
 package br.com.api.satireapi.domain.catalog.internal.model;
 
-import jakarta.persistence.*;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -37,16 +40,6 @@ public class Product {
 
     @Column(name = "excluido_em")
     private OffsetDateTime deletedAt;
-
-    @ManyToOne
-    @JoinColumn(name = "categoria_id")
-    private Category category;
-
-    @OneToMany(mappedBy = "product")
-    private List<ProductVariation> productVariations;
-
-    @OneToMany(mappedBy = "product")
-    private List<ProductImage> productImages;
 
     protected Product() {
     }
@@ -120,30 +113,6 @@ public class Product {
 
     public void setActive(boolean active) {
         this.active = active;
-    }
-
-    public List<ProductVariation> getProductVariations() {
-        return productVariations;
-    }
-
-    public void setProductVariations(List<ProductVariation> productVariations) {
-        this.productVariations = productVariations;
-    }
-
-    public List<ProductImage> getProductImages() {
-        return productImages;
-    }
-
-    public void setProductImages(List<ProductImage> productImages) {
-        this.productImages = productImages;
-    }
-
-    public Category getCategory() {
-        return category;
-    }
-
-    public void setCategory(Category category) {
-        this.category = category;
     }
 
     public OffsetDateTime getCreatedAt() {
